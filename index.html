@@ -1152,13 +1152,29 @@
                 });
             }
 
-            const acoesContainer = document.getElementById('lista-tanques-acoes'); acoesContainer.innerHTML = '';
-            dbTanques.forEach(t => {
-                const btn = document.createElement('button'); btn.className = 'btn btn-sm btn-outline'; btn.style.justifyContent = 'space-between';
-                btn.innerHTML = `<span>${t.tag} (${t.material})</span> <span>📏 Medir</span>`;
-                btn.onclick = () => { document.getElementById('regua-id').value = t.id; document.getElementById('regua-tag').textContent = t.tag; document.getElementById('regua-altura').value = t.nivelAtual; document.getElementById('modal-regua').style.display = 'flex'; };
-                acoesContainer.appendChild(btn);
-            });
+            const acoesContainer = document.getElementById('lista-tanques-acoes');
+            acoesContainer.innerHTML = '';
+            
+            if(dbTanques.length === 0) {
+                acoesContainer.innerHTML = '<div class="empty-state">Cadastre um tanque primeiro.</div>';
+            } else {
+                dbTanques.forEach(t => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-sm btn-accent'; // Mudei para a cor de destaque
+                    btn.style.justifyContent = 'space-between';
+                    btn.style.width = '100%';
+                    btn.style.cursor = 'pointer'; // Garante o cursor de clique
+                    btn.innerHTML = `<span>${t.tag} (${t.material})</span> <span>📏 Medir</span>`;
+                    btn.onclick = () => {
+                        document.getElementById('regua-id').value = t.id;
+                        document.getElementById('regua-tag').textContent = t.tag;
+                        document.getElementById('regua-altura').value = t.nivelAtual;
+                        document.getElementById('modal-regua').style.display = 'flex';
+                    };
+                    acoesContainer.appendChild(btn);
+                });
+            }
+               
             renderTabelaMovimentacoes();
         }
 
