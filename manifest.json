@@ -1,0 +1,20 @@
+{
+  "name": "TO-010 Controles",
+  "short_name": "TO-010",
+  "start_url": "/Sistema-Edeconsil/",
+  "display": "standalone",
+  "background_color": "#001C54",
+  "theme_color": "#001C54",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/j2DskyXd/rodovia.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.postimg.cc/j2DskyXd/rodovia.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
