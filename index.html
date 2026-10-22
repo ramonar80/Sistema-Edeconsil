@@ -1305,5 +1305,10 @@
             html2pdf().set({ margin: 10, filename: `Relatorio_Agregados_${new Date().toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(container).save();
         }
     </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/Sistema-Edeconsil/sw.js');
+  }
+</script>
 </body>
 </html>
