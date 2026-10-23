@@ -13,7 +13,7 @@
     <!-- FIREBASE CONFIG -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, enableIndexedDbPersistence, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, enableIndexedDbPersistence, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDtcZr8ycCIUNe9QHoKn-Ff3n2yge3FEMo",
@@ -41,6 +41,9 @@
         window.onSnapshot = onSnapshot;
         window.query = query;
         window.orderBy = orderBy;
+        window.doc = doc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
         
         window.firebaseReady = true;
         document.dispatchEvent(new Event('firebaseLoaded'));
@@ -62,7 +65,7 @@
         .overlay.active { display: block; }
 
         .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--text-light); display: flex; flex-direction: column; transition: all 0.3s ease; z-index: 100; }
-        .sidebar-header { padding: 20px; font-size: 1.2rem; font-weight: bold; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); letter-spacing: 1px; color: var(--secondary); display: flex; justify-content: center; align-items: center; position: relative;}
+        .sidebar-header { padding: 20px; font-size: 1.2rem; font-weight: bold; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); letter-spacing: 1px; color: var(--secondary); display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative;}
         .close-sidebar { display: none; position: absolute; right: 15px; top: 15px; font-size: 1.5rem; color: white; cursor: pointer; background: none; border: none; }
         .sidebar-menu { list-style: none; padding: 10px 0; overflow-y: auto; flex: 1; }
         .sidebar-menu li { padding: 15px 20px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: background 0.2s; font-size: 0.9rem; border-left: 4px solid transparent; }
@@ -109,8 +112,11 @@
 
         .activity-item { background: #F8F9FA; border: 1px solid var(--border-color); padding: 10px; border-radius: 5px; margin-bottom: 10px; font-size: 0.85rem; border-left: 3px solid var(--secondary); }
         .activity-card { background: var(--card-bg); border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 4px solid var(--primary); display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 10px; }
-        .gallery img { width: 100%; height: 80px; object-fit: cover; border-radius: 5px; cursor: pointer; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 10px; }
+        .gallery-item { position: relative; width: 100%; height: 100px; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; cursor: pointer; }
+        .gallery-item .btn-download { position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; border: none; cursor: pointer; transition: background 0.2s; }
+        .gallery-item .btn-download:hover { background: var(--primary); }
         
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #555; }
@@ -175,7 +181,10 @@
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            EDECONSIL
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <span>TO-010</span>
+                <span style="font-size: 0.65rem; color: #FFFFFF; font-weight: normal; letter-spacing: 0.5px; margin-top: 2px;">Acompanhamentos</span>
+            </div>
             <button class="close-sidebar" id="close-sidebar">&times;</button>
         </div>
         <ul class="sidebar-menu">
@@ -213,11 +222,11 @@
                     <form id="activity-form">
                         <div class="form-row">
                             <div class="form-group"><label>Tipo de Serviço *</label><input type="text" class="form-control" id="service-type" required></div>
-                            <div class="form-group"><label>Estaca Inicial *</label><input type="text" class="form-control" id="estaca-inicial" required placeholder="Ex: 1537"></div>
+                            <div class="form-group"><label>Estaca Inicial *</label><input type="number" class="form-control" id="estaca-inicial" required placeholder="Ex: 1537"></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group"><label>Estaca Final *</label><input type="text" class="form-control" id="estaca-final" required placeholder="Ex: 1685"></div>
-                            <div class="form-group"><label>Quantidade / Extensão</label><input type="text" class="form-control" id="quantity"></div>
+                            <div class="form-group"><label>Estaca Final *</label><input type="number" class="form-control" id="estaca-final" required placeholder="Ex: 1685"></div>
+                            <div class="form-group"><label>Extensão (m)</label><input type="text" class="form-control" id="quantity" readonly style="background-color: #e9ecef;" placeholder="Cálculo automático"></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group"><label>Contratempos</label><input type="text" class="form-control" id="issues"></div>
@@ -599,6 +608,7 @@
         let currentPhotoIndex = 0;
         let currentPhotoList = [];
         let unsubscribeDiario = null;
+        let editandoIdDiario = null; // Variável para saber se estamos editando
 
         document.addEventListener('DOMContentLoaded', () => {
             // NAVEGAÇÃO
@@ -640,12 +650,34 @@
             document.getElementById('next-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); updateCalendarHeader(); renderCalendar(); });
             
             document.getElementById('btn-new-entry').addEventListener('click', () => {
+                editandoIdDiario = null;
+                document.getElementById('btn-submit-diario').innerText = 'Salvar Registro';
                 document.getElementById('form-card').style.display = 'block';
                 document.getElementById('activity-form').reset();
                 photosBase64 = []; document.getElementById('photo-preview').innerHTML = '';
                 document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
             });
-            document.getElementById('btn-cancel').addEventListener('click', () => document.getElementById('form-card').style.display = 'none');
+            document.getElementById('btn-cancel').addEventListener('click', () => {
+                document.getElementById('form-card').style.display = 'none';
+                editandoIdDiario = null;
+                document.getElementById('btn-submit-diario').innerText = 'Salvar Registro';
+            });
+
+            // CÁLCULO AUTOMÁTICO DE EXTENSÃO
+            const calcExtensao = () => {
+                const ini = parseFloat(document.getElementById('estaca-inicial').value);
+                const fim = parseFloat(document.getElementById('estaca-final').value);
+                const campoQtd = document.getElementById('quantity');
+                if (!isNaN(ini) && !isNaN(fim)) {
+                    const maior = Math.max(ini, fim);
+                    const menor = Math.min(ini, fim);
+                    campoQtd.value = ((maior - menor) * 20) + ' m';
+                } else {
+                    campoQtd.value = '';
+                }
+            };
+            document.getElementById('estaca-inicial').addEventListener('input', calcExtensao);
+            document.getElementById('estaca-final').addEventListener('input', calcExtensao);
 
             document.getElementById('photos').addEventListener('change', (e) => {
                 const files = e.target.files;
@@ -746,7 +778,7 @@
             if (!window.firebaseReady) return alert("Aguarde a conexão com a nuvem.");
 
             const btnSubmit = document.getElementById('btn-submit-diario');
-            btnSubmit.innerText = "Salvando na nuvem...";
+            btnSubmit.innerText = editandoIdDiario ? "Atualizando..." : "Salvando na nuvem...";
             btnSubmit.disabled = true;
 
             const activity = {
@@ -763,15 +795,24 @@
             };
 
             try {
-                await window.addDoc(window.collection(window.db, "diario"), activity);
+                if (editandoIdDiario) {
+                    // Atualizar registro existente
+                    const docRef = window.doc(window.db, "diario", editandoIdDiario);
+                    await window.updateDoc(docRef, activity);
+                } else {
+                    // Criar novo registro
+                    await window.addDoc(window.collection(window.db, "diario"), activity);
+                }
+                
                 document.getElementById('activity-form').reset();
                 photosBase64 = []; document.getElementById('photo-preview').innerHTML = '';
                 document.getElementById('form-card').style.display = 'none';
+                editandoIdDiario = null;
+                btnSubmit.innerText = 'Salvar Registro';
             } catch (error) {
                 console.error("Erro ao salvar: ", error);
-                alert("Erro ao salvar na nuvem. As fotos podem ser muito grandes.");
+                alert("Erro ao salvar na nuvem.");
             } finally {
-                btnSubmit.innerText = "Salvar Registro";
                 btnSubmit.disabled = false;
             }
         }
@@ -791,7 +832,7 @@
             const q = window.query(window.collection(window.db, "diario"), window.orderBy("timestamp", "desc"));
 
             unsubscribeDiario = window.onSnapshot(q, (snapshot) => {
-                const todosRegistros = snapshot.docs.map(doc => doc.data());
+                const todosRegistros = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 const activities = todosRegistros.filter(act => act.dateStr === dateStr);
 
                 dayList.innerHTML = ''; detailedList.innerHTML = '';
@@ -815,8 +856,13 @@
                     if (act.photos && act.photos.length > 0) {
                         photosHtml = `<div class="gallery">`;
                         const safePhotoString = encodeURIComponent(JSON.stringify(act.photos));
-                        act.photos.forEach(p => { 
-                            photosHtml += `<img src="${p}" onclick="openModal('${p}', JSON.parse(decodeURIComponent('${safePhotoString}')))">`; 
+                        act.photos.forEach((p, index) => { 
+                            photosHtml += `
+                                <div class="gallery-item">
+                                    <img src="${p}" onclick="openModal('${p}', JSON.parse(decodeURIComponent('${safePhotoString}')))">
+                                    <button class="btn-download" onclick="baixarImagem('${p}', '${act.serviceType.replace(/'/g, "")}_${act.dateStr}_${index}.jpg')">📥 Baixar</button>
+                                </div>
+                            `; 
                         });
                         photosHtml += `</div>`;
                     }
@@ -824,17 +870,80 @@
                     detailedItem.innerHTML = `
                         <div class="activity-info">
                             <h4>${act.serviceType}</h4>
-                            <p><strong>Estacas:</strong> ${act.estacaInicial} a ${act.estacaFinal}</p>
-                            ${act.quantity ? `<p><strong>Qtd:</strong> ${act.quantity}</p>` : ''}
+                            <p><strong>Estacas:</strong> ${act.estacaInicial} a ${act.estacaFinal} ${act.quantity ? `(${act.quantity})` : ''}</p>
                             ${act.issues ? `<p style="color: #d32f2f;"><strong>Contratempos:</strong> ${act.issues}</p>` : ''}
                             ${act.observations ? `<p><strong>Obs:</strong> ${act.observations}</p>` : ''}
                             ${photosHtml}
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="btn btn-sm btn-outline" onclick="prepararEdicao('${act.id}')">✏️ Editar</button>
+                            <button class="btn btn-sm btn-outline" style="color: #d32f2f; border-color: #d32f2f;" onclick="deletarRegistro('${act.id}')">🗑️ Excluir</button>
                         </div>
                     `;
                     detailedList.appendChild(detailedItem);
                 });
             });
         }
+
+        // FUNÇÕES DE EDITAR/DELETAR/BAIXAR IMAGEM
+        window.prepararEdicao = function(id) {
+            const docRef = window.doc(window.db, "diario", id);
+            // Busca os dados atuais (usando getDoc via import dinâmico ou snapshot existente)
+            // Para simplificar, vamos pegar do HTML renderizado ou buscar no banco.
+            // Como já temos os dados na memória do onSnapshot, vamos buscar do array global.
+            
+            // Como não guardamos o array global, vamos recriar a busca.
+            window.getDoc(docRef).then((docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('service-type').value = data.serviceType;
+                    document.getElementById('estaca-inicial').value = data.estacaInicial;
+                    document.getElementById('estaca-final').value = data.estacaFinal;
+                    document.getElementById('quantity').value = data.quantity;
+                    document.getElementById('issues').value = data.issues;
+                    document.getElementById('observations').value = data.observations;
+                    
+                    // Reconstroi a galeria
+                    photosBase64 = data.photos || [];
+                    const preview = document.getElementById('photo-preview');
+                    preview.innerHTML = '';
+                    photosBase64.forEach(p => {
+                        const img = document.createElement('img');
+                        img.src = p; img.onclick = () => openModal(p, photosBase64);
+                        preview.appendChild(img);
+                    });
+
+                    editandoIdDiario = id;
+                    document.getElementById('btn-submit-diario').innerText = 'Salvar Alterações';
+                    document.getElementById('form-card').style.display = 'block';
+                    document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
+                }
+            }).catch(err => {
+                console.error("Erro ao buscar dados para edição:", err);
+                alert("Não foi possível carregar os dados para edição.");
+            });
+        };
+
+        window.deletarRegistro = async function(id) {
+            if (confirm("Tem certeza que deseja EXCLUIR este registro? Essa ação não pode ser desfeita.")) {
+                try {
+                    await window.deleteDoc(window.doc(window.db, "diario", id));
+                    // O onSnapshot vai atualizar a tela automaticamente
+                } catch (error) {
+                    console.error("Erro ao deletar:", error);
+                    alert("Erro ao excluir o registro.");
+                }
+            }
+        };
+
+        window.baixarImagem = function(base64, nomeArquivo) {
+            const link = document.createElement('a');
+            link.href = base64;
+            link.download = nomeArquivo;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
 
         window.openModal = function(src, list) {
             currentPhotoList = list || [src]; currentPhotoIndex = currentPhotoList.indexOf(src);
@@ -848,7 +957,6 @@
             document.getElementById('modal-img').src = currentPhotoList[currentPhotoIndex];
         }
         function closeModal() { document.getElementById('photo-modal').style.display = 'none'; }
-
 
         // =========================================
         // LÓGICA DA PRODUÇÃO (LOCALSTORAGE)
@@ -1161,10 +1269,10 @@
             } else {
                 dbTanques.forEach(t => {
                     const btn = document.createElement('button');
-                    btn.className = 'btn btn-sm btn-accent'; // Mudei para a cor de destaque
+                    btn.className = 'btn btn-sm btn-accent';
                     btn.style.justifyContent = 'space-between';
                     btn.style.width = '100%';
-                    btn.style.cursor = 'pointer'; // Garante o cursor de clique
+                    btn.style.cursor = 'pointer';
                     btn.innerHTML = `<span>${t.tag} (${t.material})</span> <span>📏 Medir</span>`;
                     btn.onclick = () => {
                         document.getElementById('regua-id').value = t.id;
