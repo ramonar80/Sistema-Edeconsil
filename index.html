@@ -940,42 +940,70 @@
         }
 
         // FUNÇÕES DE EDITAR/DELETAR/BAIXAR IMAGEM
-        window.prepararEdicao = function(id) {
-            if (!isAdmin) return;
-            
-            // CORRIGIDO: Usando o getDoc importado no topo do script
-            const docRef = window.doc(window.db, "diario", id);
-            
-            window.getDoc(docRef).then((docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById('service-type').value = data.serviceType;
-                    document.getElementById('estaca-inicial').value = data.estacaInicial;
-                    document.getElementById('estaca-final').value = data.estacaFinal;
-                    document.getElementById('quantity').value = data.quantity;
-                    document.getElementById('issues').value = data.issues;
-                    document.getElementById('observations').value = data.observations;
-                    
-                    photosBase64 = data.photos || [];
-                    const preview = document.getElementById('photo-preview');
-                    preview.innerHTML = '';
-                    photosBase64.forEach(p => {
-                        const img = document.createElement('img');
-                        img.src = p; img.onclick = () => openModal(p, photosBase64);
-                        preview.appendChild(img);
-                    });
+       window.prepararEdicao = function(id) {
+            if (!isAdmin) return alert("Apenas administradores podem editar.");
 
-                    editandoIdDiario = id;
-                    document.getElementById('btn-submit-diario').innerText = 'Salvar Alterações';
-                    document.getElementById('form-card').style.display = 'block';
-                    document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
-                }
-            }).catch(err => {
-                console.error("Erro ao buscar dados para edição:", err);
-                alert("Não foi possível carregar os dados para edição.");
+            // Em vez de buscar no banco, vamos ler os dados direto da tela (é mais rápido e não dá erro)
+            const todosOsCards = document.querySelectorAll('.activity-card');
+            let cardEncontrado = null;
+
+            // Encontra o card na tela que contém o botão com esse ID
+            todosOsCards.forEach(card => {
+                const btnEditar = card.querySelector(`button[onclick="prepararEdicao('${id}')"]`);
+                if (btnEditar) cardEncontrado = card;
             });
-        };
 
+            if (cardEncontrado) {
+                // Pega os textos da tela
+                const tipoServico = cardEncontrado.querySelector('h4').innerText;
+                const paragrafoEstacas = cardEncontrado.querySelector('p').innerText; 
+                // O texto está assim: "Estacas: 100 a 200 (2000 m)"
+                
+                // Extrai os números usando regex (Expressão Regular)
+                const matchEstacas = paragrafoEstacas.match(/Estacas:\s*(\d+)\s*a\s*(\d+)/);
+                const estacaInicial = matchEstacas ? matchEstacas[1] : '';
+                const estacaFinal = matchEstacas ? matchEstacas[2] : '';
+                
+                // Pega a quantidade (que está entre parênteses)
+                const matchQtd = paragrafoEstacas.match(/\((.*?)\)/);
+                const quantidade = matchQtd ? matchQtd[1] : '';
+
+                // Preenche o formulário
+                document.getElementById('service-type').value = tipoServico;
+                document.getElementById('estaca-inicial').value = estacaInicial;
+                document.getElementById('estaca-final').value = estacaFinal;
+                document.getElementById('quantity').value = quantidade;
+
+                // Pega os contratempos e observações, se existirem no card
+                const pContratempos = cardEncontrado.innerHTML.match(/<strong>Contratempos:<\/strong>\s*(.*?)<\/p>/);
+                document.getElementById('issues').value = pContratempos ? pContratempos[1].trim() : '';
+
+                const pObs = cardEncontrado.innerHTML.match(/<strong>Obs:<\/strong>\s*(.*?)<\/p>/);
+                document.getElementById('observations').value = pObs ? pObs[1].trim() : '';
+
+                // Pega as fotos da galeria do card
+                photosBase64 = [];
+                const imgs = cardEncontrado.querySelectorAll('.gallery img');
+                imgs.forEach(img => photosBase64.push(img.src));
+
+                // Reconstrói a galeria de preview
+                const preview = document.getElementById('photo-preview');
+                preview.innerHTML = '';
+                photosBase64.forEach(p => {
+                    const img = document.createElement('img');
+                    img.src = p; img.onclick = () => openModal(p, photosBase64);
+                    preview.appendChild(img);
+                });
+
+                // Muda o botão e abre o formulário
+                editandoIdDiario = id;
+                document.getElementById('btn-submit-diario').innerText = 'Salvar Alterações';
+                document.getElementById('form-card').style.display = 'block';
+                document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert("Não foi possível encontrar os dados na tela. Atualize a página e tente novamente.");
+            }
+        };
         window.deletarRegistro = async function(id) {
             if (!isAdmin) return;
             if (confirm("Tem certeza que deseja EXCLUIR este registro? Essa ação não pode ser desfeita.")) {
