@@ -59,9 +59,9 @@
             --cor-drenagem: #03A9F4;
             --cor-limpeza: #FF9800;
             --cor-manutencao: #F44336;
-            --cor-revisao: #E65100; /* Laranja Escuro */
-            --cor-nao_trabalhou: #424242; /* Cinza Escuro */
-            --cor-disposicao: #673AB7; /* Roxo */
+            --cor-revisao: #E65100;
+            --cor-nao_trabalhou: #424242;
+            --cor-disposicao: #673AB7;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -851,6 +851,8 @@
                     document.getElementById('btn-add-pde').style.display = 'none';
                 }
                 if (typeof loadDayActivities === 'function') loadDayActivities(selectedDate);
+                if (typeof renderPainelEH === 'function') renderPainelEH();
+                if (typeof renderDashboardProducao === 'function') renderDashboardProducao();
             });
 
             // INICIALIZAÇÃO DIÁRIO
@@ -1187,10 +1189,10 @@
         function closeModal() { document.getElementById('photo-modal').style.display = 'none'; }
 
         // =========================================
-        // LÓGICA DA PRODUÇÃO E CONTROLE EH (LOCALSTORAGE)
+        // LÓGICA DA PRODUÇÃO E CONTROLE EH (FIREBASE)
         // =========================================
-        let dbProducao = JSON.parse(localStorage.getItem('edeconsil_producao')) || [];
-        let dbControleEH = JSON.parse(localStorage.getItem('edeconsil_controle_eh')) || [];
+        let dbProducao = [];
+        let dbControleEH = [];
         let metaDiaria = parseInt(localStorage.getItem('edeconsil_meta')) || 4000;
         let graficoPrincipalInstance = null;
         let mesSelecionadoProducao = new Date().getMonth();
@@ -1199,6 +1201,8 @@
         // Variáveis do Painel EH
         let ehDataSelecionada = new Date().toISOString().split('T')[0];
         let ehMesAtual = new Date();
+        let unsubscribeProducao = null;
+        let unsubscribeControleEH = null;
 
         function initProducao() {
             // Toggle de Abas
@@ -1233,19 +1237,27 @@
             document.getElementById('close-lancamento').addEventListener('click', () => document.getElementById('lancamento-modal').style.display = 'none');
             document.getElementById('btn-cancel-lanc').addEventListener('click', () => document.getElementById('lancamento-modal').style.display = 'none');
 
-            document.getElementById('form-lancamento').addEventListener('submit', (e) => {
+            document.getElementById('form-lancamento').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
                 const lancamento = {
-                    id: Date.now(), data: document.getElementById('lanc-date').value,
+                    data: document.getElementById('lanc-date').value,
                     apontador: document.getElementById('lanc-apontador').value, servico: document.getElementById('lanc-servico').value,
                     estacaInicial: document.getElementById('lanc-estaca-inicial').value, estacaFinal: document.getElementById('lanc-estaca-final').value,
                     cb: document.getElementById('lanc-cb').value.toUpperCase(), eh: document.getElementById('lanc-eh').value.toUpperCase(),
                     carradas: parseFloat(document.getElementById('lanc-carradas').value), capacidade: parseFloat(document.getElementById('lanc-capacidade').value),
-                    areia: parseFloat(document.getElementById('lanc-areia').value) || 0
+                    areia: parseFloat(document.getElementById('lanc-areia').value) || 0,
+                    timestamp: new Date()
                 };
                 lancamento.volume = lancamento.carradas * lancamento.capacidade;
-                dbProducao.push(lancamento); localStorage.setItem('edeconsil_producao', JSON.stringify(dbProducao));
-                document.getElementById('form-lancamento').reset(); renderDashboardProducao(); alert('Lançamento salvo!');
+                
+                try {
+                    await window.addDoc(window.collection(window.db, "producao"), lancamento);
+                    document.getElementById('form-lancamento').reset(); 
+                    alert('Lançamento salvo na nuvem!');
+                } catch (error) {
+                    console.error(error); alert("Erro ao salvar.");
+                }
             });
 
             // Configuração Painel EH
@@ -1253,25 +1265,26 @@
                 document.getElementById('form-pde').reset();
                 document.getElementById('pde-data').value = ehDataSelecionada;
                 document.getElementById('pde-servicos-list').innerHTML = '';
-                addServicoPDE(); // Adiciona uma linha em branco por padrão
+                addServicoPDE(); 
                 document.getElementById('pde-modal').style.display = 'flex';
             });
             document.getElementById('close-pde').addEventListener('click', () => document.getElementById('pde-modal').style.display = 'none');
             document.getElementById('btn-cancel-pde').addEventListener('click', () => document.getElementById('pde-modal').style.display = 'none');
 
-            document.getElementById('form-pde').addEventListener('submit', (e) => {
+            document.getElementById('form-pde').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
+                
                 const record = {
-                    id: Date.now(),
                     data: document.getElementById('pde-data').value,
                     tag: document.getElementById('pde-tag').value.toUpperCase(),
                     operador: document.getElementById('pde-operador').value,
                     horimetroIni: parseFloat(document.getElementById('pde-horimetro-ini').value) || 0,
                     horimetroFim: parseFloat(document.getElementById('pde-horimetro-fim').value) || 0,
-                    servicos: []
+                    servicos: [],
+                    timestamp: new Date()
                 };
 
-                // Pega as linhas de serviço adicionadas
                 document.querySelectorAll('.pde-servico-row').forEach(row => {
                     const tipo = row.querySelector('.pde-serv-tipo').value;
                     const ini = row.querySelector('.pde-serv-ini').value;
@@ -1279,18 +1292,47 @@
                     if (ini && fim) record.servicos.push({ tipo, ini, fim });
                 });
 
-                dbControleEH.push(record);
-                localStorage.setItem('edeconsil_controle_eh', JSON.stringify(dbControleEH));
-                document.getElementById('pde-modal').style.display = 'none';
-                renderPainelEH();
+                try {
+                    await window.addDoc(window.collection(window.db, "controle_eh"), record);
+                    document.getElementById('pde-modal').style.display = 'none';
+                    alert('PDE salvo na nuvem!');
+                } catch (error) {
+                    console.error(error); alert("Erro ao salvar.");
+                }
             });
 
             // Navegação de datas do Painel EH
             document.getElementById('eh-prev-month').addEventListener('click', () => { ehMesAtual.setMonth(ehMesAtual.getMonth() - 1); renderPainelEH(); });
             document.getElementById('eh-next-month').addEventListener('click', () => { ehMesAtual.setMonth(ehMesAtual.getMonth() + 1); renderPainelEH(); });
 
+            // ESCUTA EM TEMPO REAL (FIREBASE)
+            escutarProducao();
+            escutarControleEH();
             renderBotoesMeses(); 
-            renderDashboardProducao();
+        }
+
+        function escutarProducao() {
+            if (!window.firebaseReady) { setTimeout(escutarProducao, 500); return; }
+            if (unsubscribeProducao) unsubscribeProducao();
+            
+            const q = window.query(window.collection(window.db, "producao"), window.orderBy("timestamp", "desc"));
+            unsubscribeProducao = window.onSnapshot(q, (snapshot) => {
+                dbProducao = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderDashboardProducao();
+                if (document.getElementById('content-controle-eh').style.display === 'block') renderPainelEH();
+            });
+        }
+
+        function escutarControleEH() {
+            if (!window.firebaseReady) { setTimeout(escutarControleEH, 500); return; }
+            if (unsubscribeControleEH) unsubscribeControleEH();
+            
+            const q = window.query(window.collection(window.db, "controle_eh"), window.orderBy("timestamp", "desc"));
+            unsubscribeControleEH = window.onSnapshot(q, (snapshot) => {
+                dbControleEH = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (document.getElementById('content-controle-eh').style.display === 'block') renderPainelEH();
+                renderDashboardProducao(); // Atualiza a produtividade no gráfico principal
+            });
         }
 
         function addServicoPDE() {
@@ -1491,12 +1533,13 @@
 
         function renderDashboardProducao() {
             const dadosMes = dbProducao.filter(d => {
+                if(!d.data) return false;
                 const [ano, mes, dia] = d.data.split('-');
                 return parseInt(ano) === anoSelecionadoProducao && parseInt(mes) === (mesSelecionadoProducao + 1);
             });
             let producaoMes = 0, areiaMes = 0;
-            dadosMes.forEach(d => { producaoMes += d.volume; areiaMes += d.areia; });
-            let producaoTotal = dbProducao.reduce((acc, curr) => acc + curr.volume, 0);
+            dadosMes.forEach(d => { producaoMes += d.volume || 0; areiaMes += d.areia || 0; });
+            let producaoTotal = dbProducao.reduce((acc, curr) => acc + (curr.volume || 0), 0);
 
             document.getElementById('kpi-mes').innerHTML = `${producaoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
             document.getElementById('kpi-total').innerHTML = `${producaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
@@ -1512,10 +1555,10 @@
                 let volTerra = 0, volSub = 0, volBase = 0, areiaDia = 0;
                 
                 lancamentosDia.forEach(l => {
-                    if (l.servico === 'Terraplenagem') volTerra += l.volume;
-                    if (l.servico === 'Sub-base') volSub += l.volume;
-                    if (l.servico === 'Base') volBase += l.volume;
-                    areiaDia += l.areia;
+                    if (l.servico === 'Terraplenagem') volTerra += (l.volume || 0);
+                    if (l.servico === 'Sub-base') volSub += (l.volume || 0);
+                    if (l.servico === 'Base') volBase += (l.volume || 0);
+                    areiaDia += (l.areia || 0);
                 });
 
                 // Puxa as horas de CARREGAMENTO do Controle EH para o dia
@@ -1619,11 +1662,15 @@
         }
 
         // =========================================
-        // LÓGICA DE MATERIAIS (LOCALSTORAGE)
+        // LÓGICA DE MATERIAIS (FIREBASE)
         // =========================================
-        let dbTanques = JSON.parse(localStorage.getItem('edeconsil_tanques')) || [];
-        let dbMovimentacoes = JSON.parse(localStorage.getItem('edeconsil_movimentacoes')) || [];
+        let dbTanques = [];
+        let dbMovimentacoes = [];
+        let dbAgregados = [];
         let filtroMovimentacaoAtual = 'todos';
+        let filtroAgrMaterial = 'todos'; let filtroAgrTipo = 'todos'; let filtroAgrSub = '';
+        
+        let unsubscribeTanques, unsubscribeMov, unsubscribeAgr;
 
         function initMateriais() {
             document.getElementById('btn-tab-betuminosos').addEventListener('click', () => {
@@ -1658,10 +1705,10 @@
                 document.getElementById('modal-tanque').style.display = 'flex';
             });
 
-            document.getElementById('form-tanque').addEventListener('submit', (e) => {
+            document.getElementById('form-tanque').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const tipo = document.getElementById('tanque-tipo').value;
-                const novoTanque = { id: Date.now(), tag: document.getElementById('tanque-tag').value.toUpperCase(), material: document.getElementById('tanque-material').value, tipo: tipo, nivelAtual: 0, volumeAtual: 0, capacidadeTotal: 0 };
+                const novoTanque = { tag: document.getElementById('tanque-tag').value.toUpperCase(), material: document.getElementById('tanque-material').value, tipo: tipo, nivelAtual: 0, volumeAtual: 0, capacidadeTotal: 0 };
                 if (tipo === 'cilindrico') {
                     novoTanque.diametro = parseFloat(document.getElementById('tanque-diametro').value);
                     novoTanque.comprimento = parseFloat(document.getElementById('tanque-comprimento-cil').value);
@@ -1672,17 +1719,16 @@
                     novoTanque.alturaTotal = parseFloat(document.getElementById('tanque-altura').value);
                     novoTanque.capacidadeTotal = ((Math.PI * (novoTanque.largura / 2) * (novoTanque.alturaTotal / 2) * novoTanque.comprimento) * 1.28 * 0.782) * 1000;
                 }
-                dbTanques.push(novoTanque); localStorage.setItem('edeconsil_tanques', JSON.stringify(dbTanques));
-                document.getElementById('modal-tanque').style.display = 'none'; renderMateriais();
+                await window.addDoc(window.collection(window.db, "tanques"), novoTanque);
+                document.getElementById('modal-tanque').style.display = 'none'; 
             });
 
-            document.getElementById('form-regua').addEventListener('submit', (e) => {
+            document.getElementById('form-regua').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const id = parseInt(document.getElementById('regua-id').value);
+                const id = document.getElementById('regua-id').value;
                 const alturaLiquido = parseFloat(document.getElementById('regua-altura').value);
                 const tanque = dbTanques.find(t => t.id === id);
                 if (tanque) {
-                    tanque.nivelAtual = alturaLiquido;
                     let volumeLitros = 0;
                     if (tanque.tipo === 'cilindrico') {
                         const r = tanque.diametro / 2;
@@ -1694,19 +1740,19 @@
                     } else {
                         volumeLitros = tanque.capacidadeTotal * ((alturaLiquido / tanque.alturaTotal) > 1 ? 1 : (alturaLiquido / tanque.alturaTotal));
                     }
-                    tanque.volumeAtual = volumeLitros; localStorage.setItem('edeconsil_tanques', JSON.stringify(dbTanques));
-                    document.getElementById('modal-regua').style.display = 'none'; renderMateriais();
+                    await window.updateDoc(window.doc(window.db, "tanques", id), { nivelAtual: alturaLiquido, volumeAtual: volumeLitros });
+                    document.getElementById('modal-regua').style.display = 'none'; 
                 }
             });
 
             document.getElementById('btn-entrada-material').addEventListener('click', () => { document.getElementById('mov-titulo').textContent = 'Registrar Entrada'; document.getElementById('mov-tipo').value = 'entrada'; document.getElementById('mov-label-doc').textContent = 'Nº Nota Fiscal'; document.getElementById('mov-label-pessoa').textContent = 'Fornecedor / Quem Recebeu'; document.getElementById('mov-grupo-lab').style.display = 'block'; document.getElementById('form-movimentacao').reset(); document.getElementById('mov-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-movimentacao').style.display = 'flex'; });
             document.getElementById('btn-saida-material').addEventListener('click', () => { document.getElementById('mov-titulo').textContent = 'Registrar Saída'; document.getElementById('mov-tipo').value = 'saida'; document.getElementById('mov-label-doc').textContent = 'Nº Doc / OS'; document.getElementById('mov-label-pessoa').textContent = 'Destino Final / Responsável'; document.getElementById('mov-grupo-lab').style.display = 'none'; document.getElementById('form-movimentacao').reset(); document.getElementById('mov-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-movimentacao').style.display = 'flex'; });
 
-            document.getElementById('form-movimentacao').addEventListener('submit', (e) => {
+            document.getElementById('form-movimentacao').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const mov = { id: Date.now(), tipo: document.getElementById('mov-tipo').value, data: document.getElementById('mov-data').value, material: document.getElementById('mov-material').value, qtd: parseFloat(document.getElementById('mov-qtd').value), doc: document.getElementById('mov-doc').value, pessoa: document.getElementById('mov-pessoa').value, lab: document.getElementById('mov-grupo-lab').style.display === 'block' ? document.getElementById('mov-lab').value : '-' };
-                dbMovimentacoes.push(mov); localStorage.setItem('edeconsil_movimentacoes', JSON.stringify(dbMovimentacoes));
-                document.getElementById('modal-movimentacao').style.display = 'none'; renderMateriais();
+                const mov = { tipo: document.getElementById('mov-tipo').value, data: document.getElementById('mov-data').value, material: document.getElementById('mov-material').value, qtd: parseFloat(document.getElementById('mov-qtd').value), doc: document.getElementById('mov-doc').value, pessoa: document.getElementById('mov-pessoa').value, lab: document.getElementById('mov-grupo-lab').style.display === 'block' ? document.getElementById('mov-lab').value : '-', timestamp: new Date() };
+                await window.addDoc(window.collection(window.db, "movimentacoes"), mov);
+                document.getElementById('modal-movimentacao').style.display = 'none';
             });
 
             document.querySelectorAll('#content-betuminosos .filtro-btn').forEach(btn => {
@@ -1718,12 +1764,61 @@
                 });
             });
             document.getElementById('btn-relatorio-pdf').addEventListener('click', gerarRelatorioPDF);
-            renderMateriais();
+
+            // Agregados Config
+            document.getElementById('btn-agregado-entrada').addEventListener('click', () => { document.getElementById('form-agr-entrada').reset(); document.getElementById('agr-ent-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-agr-entrada').style.display = 'flex'; });
+            document.getElementById('btn-agregado-saida').addEventListener('click', () => { document.getElementById('form-agr-saida').reset(); document.getElementById('agr-sai-data').value = new Date().toISOString().split('T')[0]; document.getElementById('campos-destino-obra').style.display = 'block'; document.getElementById('campos-destino-sub').style.display = 'none'; document.getElementById('modal-agr-saida').style.display = 'flex'; });
+            document.getElementById('agr-sai-destino').addEventListener('change', (e) => { document.getElementById('campos-destino-obra').style.display = (e.target.value === 'obra') ? 'block' : 'none'; document.getElementById('campos-destino-sub').style.display = (e.target.value === 'subempreiteira') ? 'block' : 'none'; });
+
+            document.getElementById('form-agr-entrada').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const ent = { tipoMov: 'entrada', data: document.getElementById('agr-ent-data').value, material: document.getElementById('agr-ent-tipo').value, caminhao: document.getElementById('agr-ent-caminhao').value.toUpperCase(), transportador: document.getElementById('agr-ent-transportador').value, local: document.getElementById('agr-ent-local').value, qtd: parseFloat(document.getElementById('agr-ent-qtd').value), valor: parseFloat(document.getElementById('agr-ent-valor').value), nota: document.getElementById('agr-ent-nota').value, fornecedor: document.getElementById('agr-ent-fornecedor').value, motorista: document.getElementById('agr-ent-motorista').value, timestamp: new Date() };
+                await window.addDoc(window.collection(window.db, "agregados"), ent);
+                document.getElementById('modal-agr-entrada').style.display = 'none'; 
+            });
+
+            document.getElementById('form-agr-saida').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const carradas = parseFloat(document.getElementById('agr-sai-carradas').value); const capacidade = parseFloat(document.getElementById('agr-sai-capacidade').value); const destino = document.getElementById('agr-sai-destino').value;
+                const sai = { tipoMov: 'saida', data: document.getElementById('agr-sai-data').value, material: document.getElementById('agr-sai-tipo').value, caminhao: document.getElementById('agr-sai-caminhao').value.toUpperCase(), transportador: document.getElementById('agr-sai-transportador').value, local: document.getElementById('agr-sai-local').value, carradas: carradas, qtd: carradas * capacidade, destino: destino, servico: destino === 'obra' ? document.getElementById('agr-sai-servico').value : '-', estacaIni: destino === 'obra' ? document.getElementById('agr-sai-estaca-ini').value : '-', estacaFim: destino === 'obra' ? document.getElementById('agr-sai-estaca-fim').value : '-', subempreiteira: destino === 'subempreiteira' ? document.getElementById('agr-sai-nome-sub').value : '-', destinoFinal: destino === 'subempreiteira' ? document.getElementById('agr-sai-destino-final').value : '-', timestamp: new Date() };
+                await window.addDoc(window.collection(window.db, "agregados"), sai);
+                document.getElementById('modal-agr-saida').style.display = 'none';
+            });
+
+            document.getElementById('filtro-agr-material').addEventListener('change', (e) => { filtroAgrMaterial = e.target.value; renderTabelaAgregados(); });
+            document.getElementById('filtro-agr-tipo').addEventListener('change', (e) => { filtroAgrTipo = e.target.value; renderTabelaAgregados(); });
+            document.getElementById('filtro-agr-sub').addEventListener('input', (e) => { filtroAgrSub = e.target.value.toLowerCase(); renderTabelaAgregados(); });
+            document.getElementById('btn-relatorio-agregados').addEventListener('click', gerarRelatorioAgregadosPDF);
+
+            // ESCUTA EM TEMPO REAL
+            escutarMateriais();
+        }
+
+        function escutarMateriais() {
+            if (!window.firebaseReady) { setTimeout(escutarMateriais, 500); return; }
+
+            // Tanques
+            unsubscribeTanques = window.onSnapshot(window.collection(window.db, "tanques"), (snap) => {
+                dbTanques = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderMateriais();
+            });
+
+            // Movimentações
+            unsubscribeMov = window.onSnapshot(window.collection(window.db, "movimentacoes"), (snap) => {
+                dbMovimentacoes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderTabelaMovimentacoes();
+            });
+
+            // Agregados
+            unsubscribeAgr = window.onSnapshot(window.collection(window.db, "agregados"), (snap) => {
+                dbAgregados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderAgregados();
+            });
         }
 
         function renderMateriais() {
             let totalRR2C = 0; let totalEIA = 0;
-            dbTanques.forEach(t => { if (t.material === 'RR-2C') totalRR2C += t.volumeAtual; if (t.material === 'EIA') totalEIA += t.volumeAtual; });
+            dbTanques.forEach(t => { if (t.material === 'RR-2C') totalRR2C += (t.volumeAtual || 0); if (t.material === 'EIA') totalEIA += (t.volumeAtual || 0); });
             document.getElementById('kpi-rr2c').innerHTML = `${totalRR2C.toLocaleString('pt-BR', {maximumFractionDigits:0})} <span class="unit">L</span>`;
             document.getElementById('kpi-eia').innerHTML = `${totalEIA.toLocaleString('pt-BR', {maximumFractionDigits:0})} <span class="unit">L</span>`;
 
@@ -1767,58 +1862,13 @@
             const tbody = document.querySelector('#tabela-movimentacoes tbody'); tbody.innerHTML = '';
             let movsFiltradas = dbMovimentacoes;
             if (filtroMovimentacaoAtual !== 'todos') movsFiltradas = dbMovimentacoes.filter(m => m.tipo === filtroMovimentacaoAtual);
-            movsFiltradas.sort((a, b) => new Date(b.data) - new Date(a.data));
+            movsFiltradas.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             movsFiltradas.forEach(m => {
-                const tr = document.createElement('tr'); const dataFormatada = m.data.split('-').reverse().join('/');
+                const tr = document.createElement('tr'); const dataFormatada = m.data ? m.data.split('-').reverse().join('/') : '-';
                 const tipoLabel = m.tipo === 'entrada' ? '<span style="color:green; font-weight:bold;">Entrada</span>' : '<span style="color:red; font-weight:bold;">Saída</span>';
-                tr.innerHTML = `<td>${dataFormatada}</td><td>${tipoLabel}</td><td>${m.material}</td><td>${m.qtd.toFixed(2)}</td><td>${m.doc}</td><td>${m.pessoa}</td><td>${m.lab}</td>`;
+                tr.innerHTML = `<td>${dataFormatada}</td><td>${tipoLabel}</td><td>${m.material}</td><td>${(m.qtd || 0).toFixed(2)}</td><td>${m.doc}</td><td>${m.pessoa}</td><td>${m.lab}</td>`;
                 tbody.appendChild(tr);
             });
-        }
-
-        function gerarRelatorioPDF() {
-            const container = document.createElement('div'); container.style.padding = '20px'; container.style.fontFamily = 'Arial, sans-serif'; container.style.color = '#333'; container.style.backgroundColor = '#fff';
-            let totalRR2C = 0; let totalEIA = 0; let tanquesHtml = '';
-            dbTanques.forEach(t => {
-                const porc = t.capacidadeTotal > 0 ? (t.volumeAtual / t.capacidadeTotal) * 100 : 0;
-                if (t.material === 'RR-2C') totalRR2C += t.volumeAtual; if (t.material === 'EIA') totalEIA += t.volumeAtual;
-                tanquesHtml += `<tr><td style="border: 1px solid #ccc; padding: 8px;">${t.tag}</td><td style="border: 1px solid #ccc; padding: 8px;">${t.material}</td><td style="border: 1px solid #ccc; padding: 8px;">${t.volumeAtual.toLocaleString('pt-BR', {maximumFractionDigits:0})} L</td><td style="border: 1px solid #ccc; padding: 8px;">${porc.toFixed(1)}%</td></tr>`;
-            });
-            container.innerHTML = `<div style="text-align: center; margin-bottom: 30px;"><h1 style="color: #001C54; margin-bottom: 5px;">EDECONSIL</h1><h2 style="color: #FFC000; margin-top: 0; font-size: 16px;">Relatório de Controle de Betuminosos</h2><p style="font-size: 12px;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div><div style="margin-bottom: 20px; display: flex; justify-content: space-between;"><div style="border: 1px solid #001C54; padding: 10px; width: 45%; text-align: center;"><strong>Estoque Total RR-2C</strong><br><span style="font-size: 20px; color: #001C54;">${totalRR2C.toLocaleString('pt-BR', {maximumFractionDigits:0})} L</span></div><div style="border: 1px solid #FFC000; padding: 10px; width: 45%; text-align: center;"><strong>Estoque Total EIA</strong><br><span style="font-size: 20px; color: #FFC000;">${totalEIA.toLocaleString('pt-BR', {maximumFractionDigits:0})} L</span></div></div><h3 style="color: #001C54; font-size: 14px;">Status dos Tanques</h3><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><thead><tr style="background-color: #001C54; color: white;"><th style="border: 1px solid #ccc; padding: 8px;">Tanque</th><th style="border: 1px solid #ccc; padding: 8px;">Material</th><th style="border: 1px solid #ccc; padding: 8px;">Volume Atual</th><th style="border: 1px solid #ccc; padding: 8px;">Nível (%)</th></tr></thead><tbody>${tanquesHtml}</tbody></table><div style="margin-top: 40px; text-align: center; font-size: 10px; color: #888;">Relatório gerado pelo Sistema Edeconsil.</div>`;
-            html2pdf().set({ margin: 10, filename: `Relatorio_Betuminosos_${new Date().toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(container).save();
-        }
-
-        // =========================================
-        // LÓGICA DE AGREGADOS (LOCALSTORAGE)
-        // =========================================
-        let dbAgregados = JSON.parse(localStorage.getItem('edeconsil_agregados')) || [];
-        let filtroAgrMaterial = 'todos'; let filtroAgrTipo = 'todos'; let filtroAgrSub = '';
-
-        function initAgregados() {
-            document.getElementById('btn-agregado-entrada').addEventListener('click', () => { document.getElementById('form-agr-entrada').reset(); document.getElementById('agr-ent-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-agr-entrada').style.display = 'flex'; });
-            document.getElementById('btn-agregado-saida').addEventListener('click', () => { document.getElementById('form-agr-saida').reset(); document.getElementById('agr-sai-data').value = new Date().toISOString().split('T')[0]; document.getElementById('campos-destino-obra').style.display = 'block'; document.getElementById('campos-destino-sub').style.display = 'none'; document.getElementById('modal-agr-saida').style.display = 'flex'; });
-            document.getElementById('agr-sai-destino').addEventListener('change', (e) => { document.getElementById('campos-destino-obra').style.display = (e.target.value === 'obra') ? 'block' : 'none'; document.getElementById('campos-destino-sub').style.display = (e.target.value === 'subempreiteira') ? 'block' : 'none'; });
-
-            document.getElementById('form-agr-entrada').addEventListener('submit', (e) => {
-                e.preventDefault();
-                const ent = { id: Date.now(), tipoMov: 'entrada', data: document.getElementById('agr-ent-data').value, material: document.getElementById('agr-ent-tipo').value, caminhao: document.getElementById('agr-ent-caminhao').value.toUpperCase(), transportador: document.getElementById('agr-ent-transportador').value, local: document.getElementById('agr-ent-local').value, qtd: parseFloat(document.getElementById('agr-ent-qtd').value), valor: parseFloat(document.getElementById('agr-ent-valor').value), nota: document.getElementById('agr-ent-nota').value, fornecedor: document.getElementById('agr-ent-fornecedor').value, motorista: document.getElementById('agr-ent-motorista').value };
-                dbAgregados.push(ent); localStorage.setItem('edeconsil_agregados', JSON.stringify(dbAgregados));
-                document.getElementById('modal-agr-entrada').style.display = 'none'; renderAgregados();
-            });
-
-            document.getElementById('form-agr-saida').addEventListener('submit', (e) => {
-                e.preventDefault();
-                const carradas = parseFloat(document.getElementById('agr-sai-carradas').value); const capacidade = parseFloat(document.getElementById('agr-sai-capacidade').value); const destino = document.getElementById('agr-sai-destino').value;
-                const sai = { id: Date.now(), tipoMov: 'saida', data: document.getElementById('agr-sai-data').value, material: document.getElementById('agr-sai-tipo').value, caminhao: document.getElementById('agr-sai-caminhao').value.toUpperCase(), transportador: document.getElementById('agr-sai-transportador').value, local: document.getElementById('agr-sai-local').value, carradas: carradas, qtd: carradas * capacidade, destino: destino, servico: destino === 'obra' ? document.getElementById('agr-sai-servico').value : '-', estacaIni: destino === 'obra' ? document.getElementById('agr-sai-estaca-ini').value : '-', estacaFim: destino === 'obra' ? document.getElementById('agr-sai-estaca-fim').value : '-', subempreiteira: destino === 'subempreiteira' ? document.getElementById('agr-sai-nome-sub').value : '-', destinoFinal: destino === 'subempreiteira' ? document.getElementById('agr-sai-destino-final').value : '-' };
-                dbAgregados.push(sai); localStorage.setItem('edeconsil_agregados', JSON.stringify(dbAgregados));
-                document.getElementById('modal-agr-saida').style.display = 'none'; renderAgregados();
-            });
-
-            document.getElementById('filtro-agr-material').addEventListener('change', (e) => { filtroAgrMaterial = e.target.value; renderTabelaAgregados(); });
-            document.getElementById('filtro-agr-tipo').addEventListener('change', (e) => { filtroAgrTipo = e.target.value; renderTabelaAgregados(); });
-            document.getElementById('filtro-agr-sub').addEventListener('input', (e) => { filtroAgrSub = e.target.value.toLowerCase(); renderTabelaAgregados(); });
-            document.getElementById('btn-relatorio-agregados').addEventListener('click', gerarRelatorioAgregadosPDF);
-            renderAgregados();
         }
 
         function renderAgregados() {
@@ -1826,15 +1876,16 @@
             let totalEntradasTon = 0; let totalSaidasM3 = 0; let entradasMesTon = 0; let saidasMesM3 = 0;
             dbAgregados.forEach(a => {
                 const [ano, mes] = a.data.split('-').map(Number); const isMesAtual = (mes - 1 === mesAtual && ano === anoAtual);
-                if (a.tipoMov === 'entrada') { totalEntradasTon += a.qtd; if (isMesAtual) entradasMesTon += a.qtd; }
-                else { totalSaidasM3 += a.qtd; if (isMesAtual) saidasMesM3 += a.qtd; }
+                if (a.tipoMov === 'entrada') { totalEntradasTon += (a.qtd || 0); if (isMesAtual) entradasMesTon += (a.qtd || 0); }
+                else { totalSaidasM3 += (a.qtd || 0); if (isMesAtual) saidasMesM3 += (a.qtd || 0); }
             });
             const estoqueSistemaTon = totalEntradasTon - totalSaidasM3;
             document.getElementById('kpi-agr-estoque').textContent = estoqueSistemaTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
             document.getElementById('kpi-agr-entradas').textContent = entradasMesTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
             document.getElementById('kpi-agr-saidas').textContent = saidasMesM3.toLocaleString('pt-BR', {maximumFractionDigits:0});
             ['kpi-agr-estoque', 'kpi-agr-entradas', 'kpi-agr-saidas'].forEach(id => {
-                document.getElementById(id).nextElementSibling.textContent = 't';
+                const el = document.getElementById(id);
+                if(el.nextElementSibling) el.nextElementSibling.textContent = 't';
             });
             document.getElementById('kpi-agr-conciliacao').textContent = estoqueSistemaTon < 0 ? 0 : 100;
             renderTabelaAgregados();
@@ -1853,15 +1904,27 @@
                 else if (filtroAgrSub !== '' && (a.tipoMov === 'entrada' || a.destino !== 'subempreiteira')) { return false; }
                 return true;
             });
-            filtrados.sort((a, b) => new Date(b.data) - new Date(a.data));
+            filtrados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             filtrados.forEach(a => {
-                const tr = document.createElement('tr'); const dataFormatada = a.data.split('-').reverse().join('/');
+                const tr = document.createElement('tr'); const dataFormatada = a.data ? a.data.split('-').reverse().join('/') : '-';
                 let detalhes = a.tipoMov === 'entrada' ? `NF: ${a.nota} | Forn: ${a.fornecedor} | Mot: ${a.motorista}` : (a.destino === 'obra' ? `Obra: ${a.servico} (Est. ${a.estacaIni} a ${a.estacaFim})` : `Sub: ${a.subempreiteira} | Dest: ${a.destinoFinal}`);
                 const tipoLabel = a.tipoMov === 'entrada' ? '<span style="color:green; font-weight:bold;">Entrada</span>' : '<span style="color:red; font-weight:bold;">Saída</span>';
                 const unidade = 'Ton';
-                tr.innerHTML = `<td>${dataFormatada}</td><td>${tipoLabel}</td><td>${a.material}</td><td>${a.caminhao}</td><td>${a.qtd.toFixed(2)} ${unidade}</td><td>${detalhes}</td>`;
+                tr.innerHTML = `<td>${dataFormatada}</td><td>${tipoLabel}</td><td>${a.material}</td><td>${a.caminhao}</td><td>${(a.qtd || 0).toFixed(2)} ${unidade}</td><td>${detalhes}</td>`;
                 tbody.appendChild(tr);
             });
+        }
+
+        function gerarRelatorioPDF() {
+            const container = document.createElement('div'); container.style.padding = '20px'; container.style.fontFamily = 'Arial, sans-serif'; container.style.color = '#333'; container.style.backgroundColor = '#fff';
+            let totalRR2C = 0; let totalEIA = 0; let tanquesHtml = '';
+            dbTanques.forEach(t => {
+                const porc = t.capacidadeTotal > 0 ? (t.volumeAtual / t.capacidadeTotal) * 100 : 0;
+                if (t.material === 'RR-2C') totalRR2C += (t.volumeAtual || 0); if (t.material === 'EIA') totalEIA += (t.volumeAtual || 0);
+                tanquesHtml += `<tr><td style="border: 1px solid #ccc; padding: 8px;">${t.tag}</td><td style="border: 1px solid #ccc; padding: 8px;">${t.material}</td><td style="border: 1px solid #ccc; padding: 8px;">${(t.volumeAtual || 0).toLocaleString('pt-BR', {maximumFractionDigits:0})} L</td><td style="border: 1px solid #ccc; padding: 8px;">${porc.toFixed(1)}%</td></tr>`;
+            });
+            container.innerHTML = `<div style="text-align: center; margin-bottom: 30px;"><h1 style="color: #001C54; margin-bottom: 5px;">EDECONSIL</h1><h2 style="color: #FFC000; margin-top: 0; font-size: 16px;">Relatório de Controle de Betuminosos</h2><p style="font-size: 12px;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div><div style="margin-bottom: 20px; display: flex; justify-content: space-between;"><div style="border: 1px solid #001C54; padding: 10px; width: 45%; text-align: center;"><strong>Estoque Total RR-2C</strong><br><span style="font-size: 20px; color: #001C54;">${totalRR2C.toLocaleString('pt-BR', {maximumFractionDigits:0})} L</span></div><div style="border: 1px solid #FFC000; padding: 10px; width: 45%; text-align: center;"><strong>Estoque Total EIA</strong><br><span style="font-size: 20px; color: #FFC000;">${totalEIA.toLocaleString('pt-BR', {maximumFractionDigits:0})} L</span></div></div><h3 style="color: #001C54; font-size: 14px;">Status dos Tanques</h3><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><thead><tr style="background-color: #001C54; color: white;"><th style="border: 1px solid #ccc; padding: 8px;">Tanque</th><th style="border: 1px solid #ccc; padding: 8px;">Material</th><th style="border: 1px solid #ccc; padding: 8px;">Volume Atual</th><th style="border: 1px solid #ccc; padding: 8px;">Nível (%)</th></tr></thead><tbody>${tanquesHtml}</tbody></table><div style="margin-top: 40px; text-align: center; font-size: 10px; color: #888;">Relatório gerado pelo Sistema Edeconsil.</div>`;
+            html2pdf().set({ margin: 10, filename: `Relatorio_Betuminosos_${new Date().toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(container).save();
         }
 
         function gerarRelatorioAgregadosPDF() {
@@ -1872,7 +1935,7 @@
                 if (filtroAgrTipo === 'saida_sub' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira')) return false;
                 if (filtroAgrSub !== '' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira' || !(a.subempreiteira || '').toLowerCase().includes(filtroAgrSub))) return false;
                 return true;
-            }).sort((a, b) => new Date(b.data) - new Date(a.data));
+            }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             if (filtrados.length === 0) return alert("Não há dados para gerar o relatório com os filtros atuais.");
             const container = document.createElement('div'); container.style.padding = '20px'; container.style.fontFamily = 'Arial, sans-serif'; container.style.color = '#333'; container.style.backgroundColor = '#fff';
             const escapar = valor => String(valor ?? '-').replace(/[&<>"']/g, caractere => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[caractere]));
@@ -1882,7 +1945,7 @@
                 const entrada = a.tipoMov === 'entrada';
                 const destino = entrada ? `NF: ${a.nota || '-'} | Forn: ${a.fornecedor || '-'}` : (a.destino === 'obra' ? `Obra: ${a.servico || '-'} (Est. ${a.estacaIni || '-'} a ${a.estacaFim || '-'})` : `Sub: ${a.subempreiteira || '-'} | Dest: ${a.destinoFinal || '-'}`);
                 const quantidadeTon = entrada ? a.qtd : a.qtd / 0.65;
-                const valores = [a.data.split('-').reverse().join('/'), entrada ? 'Entrada' : 'Saída', a.material, quantidadeTon.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), a.caminhao, a.transportador || '-', a.local || '-', destino, a.responsavel || a.motorista || '-'];
+                const valores = [a.data ? a.data.split('-').reverse().join('/') : '-', entrada ? 'Entrada' : 'Saída', a.material, quantidadeTon.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), a.caminhao, a.transportador || '-', a.local || '-', destino, a.responsavel || a.motorista || '-'];
                 return `<tr>${valores.map(valor => `<td style="${estiloCelula}">${escapar(valor)}</td>`).join('')}</tr>`;
             }).join('');
             container.innerHTML = `<div style="text-align: center; margin-bottom: 30px;"><img src="https://i.postimg.cc/dVf8bLHk/logo-Edeconsil.jpg" alt="Edeconsil" crossorigin="anonymous" style="display: block; width: 150px; margin: auto;"><h2 style="color: #FFC000; margin-top: 0; font-size: 16px;">Relatório de Movimentação de Agregados</h2><p style="font-size: 12px;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p><p style="font-size: 12px;"><strong>Filtros aplicados:</strong> Material: ${escapar(filtroAgrMaterial)} | Tipo: ${escapar(filtroAgrTipo)} | Subempreiteira: ${escapar(filtroAgrSub || 'Todas')}</p></div><table style="width: 100%; table-layout: auto; word-wrap: break-word; border-collapse: collapse; margin-bottom: 20px;"><thead><tr style="background-color: #001C54; color: white;">${colunas.map(coluna => `<th style="${estiloCelula}">${coluna}</th>`).join('')}</tr></thead><tbody>${tableHtml}</tbody></table><div style="margin-top: 40px; text-align: center; font-size: 10px; color: #888;">Relatório gerado pelo Sistema Edeconsil.</div>`;
@@ -1896,3 +1959,4 @@
 </script>
 </body>
 </html>
+       
