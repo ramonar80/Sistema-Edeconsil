@@ -30,8 +30,8 @@
         const auth = getAuth(app);
 
         enableIndexedDbPersistence(db).catch((err) => {
-            if (err.code == 'failed-precondition') { console.warn("Persistência offline falhou: Múltiplas abas abertas."); }
-            else if (err.code == 'unimplemented') { console.warn("Persistência offline não suportada pelo navegador."); }
+            if (err.code == 'failed-precondition') { console.warn("Persistência offline falhou."); }
+            else if (err.code == 'unimplemented') { console.warn("Persistência offline não suportada."); }
         });
 
         window.db = db; window.collection = collection; window.addDoc = addDoc; window.onSnapshot = onSnapshot;
@@ -52,6 +52,12 @@
             --secondary: #FFC000; --secondary-hover: #e6ac00;
             --bg-color: #F5F7FA; --text-dark: #333333;
             --text-light: #FFFFFF; --border-color: #E0E0E0; --card-bg: #FFFFFF;
+            
+            --cor-carregamento: #4CAF50;
+            --cor-almoco: #9E9E9E;
+            --cor-drenagem: #03A9F4;
+            --cor-limpeza: #FF9800;
+            --cor-manutencao: #F44336;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -155,6 +161,42 @@
         .modal-content { background: var(--card-bg); padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative; }
         .modal-close { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; color: #333; }
 
+        /* ESTILOS DA AGENDA (CONTROLE EH) */
+        .eh-layout { display: flex; gap: 20px; height: calc(100vh - 180px); }
+        .eh-sidebar { width: 280px; background: var(--card-bg); border-radius: 8px; padding: 20px; overflow-y: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .eh-main { flex: 1; background: var(--card-bg); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        .eh-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #F8F9FA; }
+        .eh-header h3 { color: var(--primary); font-size: 1.2rem; }
+        
+        .eh-columns-header { display: flex; border-bottom: 1px solid var(--border-color); background: #F8F9FA; }
+        .eh-col-header { flex: 1; padding: 10px; text-align: center; border-right: 1px solid var(--border-color); min-width: 150px; }
+        .eh-col-header:last-child { border-right: none; }
+        .eh-col-header .eh-title { font-weight: bold; font-size: 1.1rem; color: var(--primary); }
+        .eh-col-header .eh-stats { font-size: 0.8rem; color: #666; }
+
+        .eh-timeline { flex: 1; display: flex; overflow-y: auto; position: relative; }
+        .eh-time-axis { width: 60px; background: #F8F9FA; border-right: 1px solid var(--border-color); position: relative; }
+        .eh-time-mark { position: absolute; width: 100%; text-align: right; padding-right: 10px; font-size: 0.75rem; color: #888; transform: translateY(-50%); }
+        
+        .eh-grid { flex: 1; display: flex; position: relative; }
+        .eh-col { flex: 1; border-right: 1px solid var(--border-color); position: relative; min-width: 150px; background: #fff; }
+        .eh-col:last-child { border-right: none; }
+        
+        .eh-event { position: absolute; left: 5px; right: 5px; border-radius: 5px; padding: 5px; font-size: 0.75rem; color: #fff; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-left: 3px solid rgba(0,0,0,0.2); }
+        .eh-event .evt-title { font-weight: bold; display: block; margin-bottom: 2px; }
+        .eh-event .evt-time { font-size: 0.7rem; opacity: 0.9; }
+        
+        .bg-carregamento { background-color: var(--cor-carregamento); }
+        .bg-almoco { background-color: var(--cor-almoco); }
+        .bg-drenagem { background-color: var(--cor-drenagem); }
+        .bg-limpeza { background-color: var(--cor-limpeza); }
+        .bg-manutencao { background-color: var(--cor-manutencao); }
+
+        .legend-container { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px; font-size: 0.8rem; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 15px; height: 15px; border-radius: 3px; }
+
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .menu-toggle { display: block; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
@@ -163,6 +205,8 @@
             .close-sidebar { display: block; }
             .layout-grid { grid-template-columns: 1fr; height: auto; }
             .materiais-grid { grid-template-columns: 1fr; }
+            .eh-layout { flex-direction: column; height: auto; }
+            .eh-sidebar { width: 100%; }
             .workspace { padding: 10px; }
             .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
             .form-row { grid-template-columns: 1fr; }
@@ -268,24 +312,80 @@
                 </div>
             </div>
 
-            <!-- TELA 2: PRODUÇÃO -->
+            <!-- TELA 2: PRODUÇÃO E CONTROLE EH -->
             <div id="page-producao" class="page-section">
-                <div class="page-header">
-                    <h2>Volume Terraplanagem Araguatins</h2>
-                    <button class="btn btn-accent" id="btn-add-lancamento">➕ Lançar Produção Diária</button>
+                <div class="toggle-container">
+                    <button class="toggle-btn active" id="btn-tab-producao">PRODUÇÃO</button>
+                    <button class="toggle-btn" id="btn-tab-controle-eh">CONTROLE EH</button>
                 </div>
-                <div class="kpi-container">
-                    <div class="kpi-card"><h4>Produção no Mês (m³)</h4><div class="value" id="kpi-mes">0,00</div></div>
-                    <div class="kpi-card"><h4>Produção Total (m³)</h4><div class="value" id="kpi-total">0,00</div></div>
-                    <div class="kpi-card"><h4>Produtividade Média (m³/h)</h4><div class="value" id="kpi-produtividade">0,00</div></div>
-                    <div class="kpi-card"><h4>Areia Lançada (m³)</h4><div class="value" id="kpi-areia">0,00</div></div>
+
+                <!-- CONTEÚDO: PRODUÇÃO -->
+                <div id="content-producao">
+                    <div class="page-header">
+                        <h2>Volume Terraplanagem Araguatins</h2>
+                        <button class="btn btn-accent" id="btn-add-lancamento">➕ Lançar Produção Diária</button>
+                    </div>
+                    <div class="kpi-container">
+                        <div class="kpi-card"><h4>Produção no Mês (m³)</h4><div class="value" id="kpi-mes">0,00</div></div>
+                        <div class="kpi-card"><h4>Produção Total (m³)</h4><div class="value" id="kpi-total">0,00</div></div>
+                        <div class="kpi-card"><h4>Produtividade Média (m³/h)</h4><div class="value" id="kpi-produtividade">0,00</div></div>
+                        <div class="kpi-card"><h4>Areia Lançada (m³)</h4><div class="value" id="kpi-areia">0,00</div></div>
+                    </div>
+                    <div class="chart-controls">
+                        <div class="month-selector" id="month-selector"></div>
+                        <div class="meta-input-group"><label>Meta Diária:</label><input type="number" id="meta-diaria-input" value="4000"></div>
+                    </div>
+                    <div class="chart-wrapper"><div class="chart-container"><canvas id="graficoProducao"></canvas></div></div>
                 </div>
-                <div class="chart-controls">
-                    <div class="month-selector" id="month-selector"></div>
-                    <div class="meta-input-group"><label>Meta Diária:</label><input type="number" id="meta-diaria-input" value="4000"></div>
+
+                <!-- CONTEÚDO: CONTROLE EH -->
+                <div id="content-controle-eh" style="display: none;">
+                    <div class="page-header" style="margin-bottom: 10px;">
+                        <h2 id="eh-mes-ano-title">Junho de 2026</h2>
+                        <button class="btn btn-accent" id="btn-add-pde">➕ Lançar PDE</button>
+                    </div>
+                    
+                    <div class="eh-layout">
+                        <!-- Calendário Lateral -->
+                        <div class="eh-sidebar">
+                            <div class="calendar-header" style="margin-bottom: 10px;">
+                                <button class="btn-outline" id="eh-prev-month" style="border:none; background:none; cursor:pointer;">&#10094;</button>
+                                <h3 id="eh-month-year" style="font-size: 1rem;">Junho de 2026</h3>
+                                <button class="btn-outline" id="eh-next-month" style="border:none; background:none; cursor:pointer;">&#10095;</button>
+                            </div>
+                            <div class="calendar-grid" id="eh-calendar-grid" style="margin-bottom: 20px;"></div>
+                            
+                            <div class="legend-container">
+                                <h4 style="width:100%; margin-bottom: 5px; color: var(--primary); font-size: 0.9rem;">Legenda</h4>
+                                <div class="legend-item"><div class="legend-color" style="background: var(--cor-carregamento);"></div> Carregamento</div>
+                                <div class="legend-item"><div class="legend-color" style="background: var(--cor-almoco);"></div> Almoço</div>
+                                <div class="legend-item"><div class="legend-color" style="background: var(--cor-drenagem);"></div> Drenagem/Escavação</div>
+                                <div class="legend-item"><div class="legend-color" style="background: var(--cor-limpeza);"></div> Limpeza/Supressão</div>
+                                <div class="legend-item"><div class="legend-color" style="background: var(--cor-manutencao);"></div> Manutenção</div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Principal -->
+                        <div class="eh-main">
+                            <div class="eh-header">
+                                <h3><span id="eh-selected-date-text">Hoje</span></h3>
+                                <div id="eh-header-stats" style="font-size: 0.9rem; font-weight: bold; color: var(--primary);"></div>
+                            </div>
+                            <div class="eh-columns-header" id="eh-columns-header">
+                                <!-- Colunas geradas via JS -->
+                            </div>
+                            <div class="eh-timeline" id="eh-timeline">
+                                <div class="eh-time-axis" id="eh-time-axis">
+                                    <!-- Marcações de hora geradas via JS -->
+                                </div>
+                                <div class="eh-grid" id="eh-grid">
+                                    <!-- Colunas com eventos gerados via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="chart-wrapper"><div class="chart-container"><canvas id="graficoProducao"></canvas></div></div>
-                <div class="chart-wrapper" style="margin-top: 20px;"><div class="chart-container" style="height: 250px; min-width: 600px;"><canvas id="graficoEficiencia"></canvas></div></div>
+
             </div>
 
             <!-- TELA 3: MATERIAIS -->
@@ -413,27 +513,68 @@
                     <div class="form-group"><label>Caminhão (CB)</label><input type="text" class="form-control" id="lanc-cb" required></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>Escavadeira (EH)</label><input type="text" class="form-control" id="lanc-eh" required></div>
+                    <div class="form-group"><label>Escavadeira (EH) *</label><input type="text" class="form-control" id="lanc-eh" required placeholder="Ex: EH-59"></div>
                     <div class="form-group"><label>Carradas (und)</label><input type="number" class="form-control" id="lanc-carradas" min="1" required></div>
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>Capacidade (m³)</label><input type="number" class="form-control" id="lanc-capacidade" min="1" required></div>
-                    <div class="form-group"><label>Horas Trabalhadas (EH)</label><input type="number" class="form-control" id="lanc-horas" min="0" step="0.5" required></div>
-                </div>
-                <div class="form-row">
                     <div class="form-group"><label>Areia Lançada (m³)</label><input type="number" class="form-control" id="lanc-areia" min="0" step="0.1"></div>
-                    <div class="form-group">
-                        <label>Status da EH</label>
-                        <select class="form-control" id="lanc-status-eh">
-                            <option value="Trabalhando">Trabalhando</option>
-                            <option value="Manutenção">Em Manutenção</option>
-                            <option value="Outra Atividade">Outra Atividade</option>
-                        </select>
-                    </div>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                     <button type="button" class="btn btn-outline" id="btn-cancel-lanc">Cancelar</button>
                     <button type="submit" class="btn btn-accent">Salvar Lançamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal PDE (Controle EH) -->
+    <div class="modal" id="pde-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="modal-close" id="close-pde">&times;</span>
+            <h3 style="color: var(--primary); margin-bottom: 20px;">Lançamento de PDE (Escavadeira)</h3>
+            <form id="form-pde">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Status da Escavadeira</label>
+                        <select class="form-control" id="pde-status" required onchange="togglePdeFields()">
+                            <option value="trabalhou">Trabalhou</option>
+                            <option value="manutencao">Em Manutenção</option>
+                            <option value="nao_trabalhou">Não Trabalhou</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Tag da EH *</label><input type="text" class="form-control" id="pde-tag" required placeholder="Ex: EH-62"></div>
+                </div>
+
+                <!-- Campos se Trabalhou -->
+                <div id="pde-campos-trabalho">
+                    <div class="form-row">
+                        <div class="form-group"><label>Nome do Operador</label><input type="text" class="form-control" id="pde-operador"></div>
+                        <div class="form-group"><label>Data</label><input type="date" class="form-control" id="pde-data" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Horímetro Inicial</label><input type="number" class="form-control" id="pde-horimetro-ini" step="0.1"></div>
+                        <div class="form-group"><label>Horímetro Final</label><input type="number" class="form-control" id="pde-horimetro-fim" step="0.1"></div>
+                    </div>
+                    
+                    <div style="border-top: 1px solid #ccc; margin: 15px 0; padding-top: 15px;">
+                        <h4 style="margin-bottom: 10px; color: var(--primary); font-size: 1rem;">Adicionar Serviços (Horários)</h4>
+                        <div id="pde-servicos-list" style="margin-bottom: 10px;"></div>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="addServicoPDE()">➕ Adicionar Serviço</button>
+                    </div>
+                </div>
+
+                <!-- Campos se Manutenção ou Não Trabalhou -->
+                <div id="pde-campos-justificativa" style="display: none;">
+                    <div class="form-group">
+                        <label id="pde-label-justificativa">Descrição do Problema / Motivo</label>
+                        <textarea class="form-control" id="pde-motivo" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-outline" id="btn-cancel-pde">Cancelar</button>
+                    <button type="submit" class="btn btn-accent">Salvar PDE</button>
                 </div>
             </form>
         </div>
@@ -671,9 +812,13 @@
                     if (emailsPermitidos.includes(user.email)) {
                         isAdmin = true;
                         document.getElementById('btn-new-entry').style.display = 'flex';
+                        document.getElementById('btn-add-lancamento').style.display = 'flex';
+                        document.getElementById('btn-add-pde').style.display = 'flex';
                     } else {
                         isAdmin = false;
                         document.getElementById('btn-new-entry').style.display = 'none';
+                        document.getElementById('btn-add-lancamento').style.display = 'none';
+                        document.getElementById('btn-add-pde').style.display = 'none';
                         alert("Você está logado como visualizador. Não pode lançar dados.");
                     }
                 } else {
@@ -682,8 +827,9 @@
                     btnLogout.style.display = 'none';
                     userEmail.style.display = 'none';
                     document.getElementById('btn-new-entry').style.display = 'none';
+                    document.getElementById('btn-add-lancamento').style.display = 'none';
+                    document.getElementById('btn-add-pde').style.display = 'none';
                 }
-                // Recarrega a lista para esconder/mostrar botões de editar
                 if (typeof loadDayActivities === 'function') loadDayActivities(selectedDate);
             });
 
@@ -733,7 +879,6 @@
                     reader.onload = function(event) {
                         const image = new Image();
                         image.onload = function() {
-                            // AUMENTADO PARA 1200x1200 e Qualidade 0.8
                             const scale = Math.min(1200 / image.width, 1200 / image.height, 1);
                             const canvas = document.createElement('canvas');
                             canvas.width = Math.max(1, Math.round(image.width * scale));
@@ -913,7 +1058,6 @@
                         photosHtml += `</div>`;
                     }
 
-                    // BOTÕES DE EDITAR/DELETAR SÓ APARECEM SE FOR ADMIN
                     let adminButtons = '';
                     if (isAdmin) {
                         adminButtons = `
@@ -939,54 +1083,39 @@
             });
         }
 
-        // FUNÇÕES DE EDITAR/DELETAR/BAIXAR IMAGEM
-       window.prepararEdicao = function(id) {
+        window.prepararEdicao = function(id) {
             if (!isAdmin) return alert("Apenas administradores podem editar.");
-
-            // Em vez de buscar no banco, vamos ler os dados direto da tela (é mais rápido e não dá erro)
             const todosOsCards = document.querySelectorAll('.activity-card');
             let cardEncontrado = null;
-
-            // Encontra o card na tela que contém o botão com esse ID
             todosOsCards.forEach(card => {
                 const btnEditar = card.querySelector(`button[onclick="prepararEdicao('${id}')"]`);
                 if (btnEditar) cardEncontrado = card;
             });
 
             if (cardEncontrado) {
-                // Pega os textos da tela
                 const tipoServico = cardEncontrado.querySelector('h4').innerText;
                 const paragrafoEstacas = cardEncontrado.querySelector('p').innerText; 
-                // O texto está assim: "Estacas: 100 a 200 (2000 m)"
-                
-                // Extrai os números usando regex (Expressão Regular)
                 const matchEstacas = paragrafoEstacas.match(/Estacas:\s*(\d+)\s*a\s*(\d+)/);
                 const estacaInicial = matchEstacas ? matchEstacas[1] : '';
                 const estacaFinal = matchEstacas ? matchEstacas[2] : '';
-                
-                // Pega a quantidade (que está entre parênteses)
                 const matchQtd = paragrafoEstacas.match(/\((.*?)\)/);
                 const quantidade = matchQtd ? matchQtd[1] : '';
 
-                // Preenche o formulário
                 document.getElementById('service-type').value = tipoServico;
                 document.getElementById('estaca-inicial').value = estacaInicial;
                 document.getElementById('estaca-final').value = estacaFinal;
                 document.getElementById('quantity').value = quantidade;
 
-                // Pega os contratempos e observações, se existirem no card
                 const pContratempos = cardEncontrado.innerHTML.match(/<strong>Contratempos:<\/strong>\s*(.*?)<\/p>/);
                 document.getElementById('issues').value = pContratempos ? pContratempos[1].trim() : '';
 
                 const pObs = cardEncontrado.innerHTML.match(/<strong>Obs:<\/strong>\s*(.*?)<\/p>/);
                 document.getElementById('observations').value = pObs ? pObs[1].trim() : '';
 
-                // Pega as fotos da galeria do card
                 photosBase64 = [];
                 const imgs = cardEncontrado.querySelectorAll('.gallery img');
                 imgs.forEach(img => photosBase64.push(img.src));
 
-                // Reconstrói a galeria de preview
                 const preview = document.getElementById('photo-preview');
                 preview.innerHTML = '';
                 photosBase64.forEach(p => {
@@ -995,7 +1124,6 @@
                     preview.appendChild(img);
                 });
 
-                // Muda o botão e abre o formulário
                 editandoIdDiario = id;
                 document.getElementById('btn-submit-diario').innerText = 'Salvar Alterações';
                 document.getElementById('form-card').style.display = 'block';
@@ -1039,16 +1167,36 @@
         function closeModal() { document.getElementById('photo-modal').style.display = 'none'; }
 
         // =========================================
-        // LÓGICA DA PRODUÇÃO (LOCALSTORAGE)
+        // LÓGICA DA PRODUÇÃO E CONTROLE EH (LOCALSTORAGE)
         // =========================================
         let dbProducao = JSON.parse(localStorage.getItem('edeconsil_producao')) || [];
+        let dbControleEH = JSON.parse(localStorage.getItem('edeconsil_controle_eh')) || []; // {id, data, tag, status, operador, horimetroIni, horimetroFim, servicos: [], motivo}
         let metaDiaria = parseInt(localStorage.getItem('edeconsil_meta')) || 4000;
         let graficoPrincipalInstance = null;
-        let graficoEficienciaInstance = null;
         let mesSelecionadoProducao = new Date().getMonth();
         let anoSelecionadoProducao = new Date().getFullYear();
+        
+        // Variáveis do Painel EH
+        let ehDataSelecionada = new Date().toISOString().split('T')[0];
+        let ehMesAtual = new Date();
 
         function initProducao() {
+            // Toggle de Abas
+            document.getElementById('btn-tab-producao').addEventListener('click', () => {
+                document.getElementById('btn-tab-producao').classList.add('active');
+                document.getElementById('btn-tab-controle-eh').classList.remove('active');
+                document.getElementById('content-producao').style.display = 'block';
+                document.getElementById('content-controle-eh').style.display = 'none';
+            });
+            document.getElementById('btn-tab-controle-eh').addEventListener('click', () => {
+                document.getElementById('btn-tab-controle-eh').classList.add('active');
+                document.getElementById('btn-tab-producao').classList.remove('active');
+                document.getElementById('content-controle-eh').style.display = 'block';
+                document.getElementById('content-producao').style.display = 'none';
+                renderPainelEH();
+            });
+
+            // Produção Config
             const metaInput = document.getElementById('meta-diaria-input');
             metaInput.value = metaDiaria;
             metaInput.addEventListener('change', (e) => { metaDiaria = parseFloat(e.target.value) || 0; localStorage.setItem('edeconsil_meta', metaDiaria); renderDashboardProducao(); });
@@ -1073,15 +1221,274 @@
                     estacaInicial: document.getElementById('lanc-estaca-inicial').value, estacaFinal: document.getElementById('lanc-estaca-final').value,
                     cb: document.getElementById('lanc-cb').value.toUpperCase(), eh: document.getElementById('lanc-eh').value.toUpperCase(),
                     carradas: parseFloat(document.getElementById('lanc-carradas').value), capacidade: parseFloat(document.getElementById('lanc-capacidade').value),
-                    horas: parseFloat(document.getElementById('lanc-horas').value), areia: parseFloat(document.getElementById('lanc-areia').value) || 0,
-                    statusEh: document.getElementById('lanc-status-eh').value
+                    areia: parseFloat(document.getElementById('lanc-areia').value) || 0
                 };
                 lancamento.volume = lancamento.carradas * lancamento.capacidade;
                 dbProducao.push(lancamento); localStorage.setItem('edeconsil_producao', JSON.stringify(dbProducao));
                 document.getElementById('form-lancamento').reset(); renderDashboardProducao(); alert('Lançamento salvo!');
             });
 
-            renderBotoesMeses(); renderDashboardProducao();
+            // Configuração Painel EH
+            document.getElementById('btn-add-pde').addEventListener('click', () => {
+                document.getElementById('form-pde').reset();
+                document.getElementById('pde-data').value = ehDataSelecionada;
+                document.getElementById('pde-status').value = 'trabalhou';
+                togglePdeFields();
+                document.getElementById('pde-servicos-list').innerHTML = '';
+                addServicoPDE(); // Adiciona uma linha em branco por padrão
+                document.getElementById('pde-modal').style.display = 'flex';
+            });
+            document.getElementById('close-pde').addEventListener('click', () => document.getElementById('pde-modal').style.display = 'none');
+            document.getElementById('btn-cancel-pde').addEventListener('click', () => document.getElementById('pde-modal').style.display = 'none');
+
+            document.getElementById('form-pde').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const status = document.getElementById('pde-status').value;
+                const record = {
+                    id: Date.now(),
+                    data: document.getElementById('pde-data').value,
+                    tag: document.getElementById('pde-tag').value.toUpperCase(),
+                    status: status
+                };
+
+                if (status === 'trabalhou') {
+                    record.operador = document.getElementById('pde-operador').value;
+                    record.horimetroIni = parseFloat(document.getElementById('pde-horimetro-ini').value) || 0;
+                    record.horimetroFim = parseFloat(document.getElementById('pde-horimetro-fim').value) || 0;
+                    record.servicos = [];
+                    // Pega as linhas de serviço adicionadas
+                    document.querySelectorAll('.pde-servico-row').forEach(row => {
+                        const tipo = row.querySelector('.pde-serv-tipo').value;
+                        const ini = row.querySelector('.pde-serv-ini').value;
+                        const fim = row.querySelector('.pde-serv-fim').value;
+                        if (ini && fim) record.servicos.push({ tipo, ini, fim });
+                    });
+                } else {
+                    record.motivo = document.getElementById('pde-motivo').value;
+                }
+
+                dbControleEH.push(record);
+                localStorage.setItem('edeconsil_controle_eh', JSON.stringify(dbControleEH));
+                document.getElementById('pde-modal').style.display = 'none';
+                renderPainelEH();
+            });
+
+            // Navegação de datas do Painel EH
+            document.getElementById('eh-prev-month').addEventListener('click', () => { ehMesAtual.setMonth(ehMesAtual.getMonth() - 1); renderPainelEH(); });
+            document.getElementById('eh-next-month').addEventListener('click', () => { ehMesAtual.setMonth(ehMesAtual.getMonth() + 1); renderPainelEH(); });
+
+            renderBotoesMeses(); 
+            renderDashboardProducao();
+        }
+
+        function togglePdeFields() {
+            const status = document.getElementById('pde-status').value;
+            const camposTrabalho = document.getElementById('pde-campos-trabalho');
+            const camposJustificativa = document.getElementById('pde-campos-justificativa');
+            const labelJustificativa = document.getElementById('pde-label-justificativa');
+            const inputMotivo = document.getElementById('pde-motivo');
+
+            if (status === 'trabalhou') {
+                camposTrabalho.style.display = 'block';
+                camposJustificativa.style.display = 'none';
+                document.getElementById('pde-operador').required = true;
+            } else {
+                camposTrabalho.style.display = 'none';
+                camposJustificativa.style.display = 'block';
+                document.getElementById('pde-operador').required = false;
+                if (status === 'manutencao') {
+                    labelJustificativa.innerText = 'Qual o problema da Manutenção?';
+                } else {
+                    labelJustificativa.innerText = 'Qual o motivo de não ter trabalhado?';
+                }
+            }
+        }
+
+        function addServicoPDE() {
+            const container = document.getElementById('pde-servicos-list');
+            const div = document.createElement('div');
+            div.className = 'pde-servico-row form-row';
+            div.style.marginBottom = '10px';
+            div.innerHTML = `
+                <div class="form-group" style="margin-bottom:0;">
+                    <select class="form-control pde-serv-tipo" required>
+                        <option value="Carregamento">Carregamento</option>
+                        <option value="Almoço">Almoço</option>
+                        <option value="Drenagem/Escavação">Drenagem/Escavação</option>
+                        <option value="Limpeza/Supressão">Limpeza/Supressão</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0; display:flex; gap:5px;">
+                    <input type="time" class="form-control pde-serv-ini" required>
+                    <input type="time" class="form-control pde-serv-fim" required>
+                    <button type="button" class="btn btn-outline" style="padding: 5px;" onclick="this.parentElement.parentElement.remove()">X</button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function renderPainelEH() {
+            // Atualiza Título e Calendário Lateral
+            const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            document.getElementById('eh-mes-ano-title').textContent = `${months[ehMesAtual.getMonth()]} de ${ehMesAtual.getFullYear()}`;
+            document.getElementById('eh-month-year').textContent = `${months[ehMesAtual.getMonth()]} de ${ehMesAtual.getFullYear()}`;
+            
+            // Calendário Lateral
+            const grid = document.getElementById('eh-calendar-grid');
+            grid.innerHTML = '';
+            const daysOfWeek = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+            daysOfWeek.forEach(d => { const el = document.createElement('div'); el.className = 'day-name'; el.textContent = d; grid.appendChild(el); });
+            const year = ehMesAtual.getFullYear(); const month = ehMesAtual.getMonth();
+            const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'day'; dayEl.textContent = i;
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                if (dateStr === ehDataSelecionada) dayEl.classList.add('active');
+                dayEl.onclick = () => { ehDataSelecionada = dateStr; renderPainelEH(); };
+                grid.appendChild(dayEl);
+            }
+
+            // Cabeçalho da Data Selecionada
+            const [y, m, d] = ehDataSelecionada.split('-');
+            const dataObj = new Date(y, m-1, d);
+            const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            document.getElementById('eh-selected-date-text').textContent = `${diasSemana[dataObj.getDay()]}, ${d} de ${months[m-1]}`;
+
+            // Filtra os registros do dia selecionado
+            const registrosDoDia = dbControleEH.filter(r => r.data === ehDataSelecionada);
+            
+            // Pega quais EH's têm produção nesse dia para montar as colunas
+            const producaoDoDia = dbProducao.filter(p => p.data === ehDataSelecionada);
+            const tagsEH = [...new Set([...registrosDoDia.map(r => r.tag), ...producaoDoDia.map(p => p.eh)])].filter(Boolean);
+            
+            // Ordena as tags
+            tagsEH.sort();
+
+            const headerCols = document.getElementById('eh-columns-header');
+            const gridCols = document.getElementById('eh-grid');
+            headerCols.innerHTML = '';
+            gridCols.innerHTML = '';
+
+            let totalVolumeDia = 0;
+            let totalHorasCarregamento = 0;
+
+            if (tagsEH.length === 0) {
+                gridCols.innerHTML = '<div class="empty-state" style="width:100%; padding-top:50px;">Nenhum lançamento para este dia.</div>';
+                document.getElementById('eh-header-stats').textContent = '';
+            }
+
+            tagsEH.forEach(tag => {
+                // 1. Cria coluna no header
+                const colHeader = document.createElement('div');
+                colHeader.className = 'eh-col-header';
+                colHeader.innerHTML = `<div class="eh-title">${tag}</div>`;
+                
+                // Calcula stats da EH
+                const prodEH = producaoDoDia.filter(p => p.eh === tag).reduce((acc, curr) => acc + curr.volume, 0);
+                let horasCarregamentoEH = 0;
+                
+                const regEH = registrosDoDia.filter(r => r.tag === tag);
+                regEH.forEach(r => {
+                    if (r.status === 'trabalhou' && r.servicos) {
+                        r.servicos.forEach(s => {
+                            if (s.tipo === 'Carregamento') {
+                                const [hIni, mIni] = s.ini.split(':').map(Number);
+                                const [hFim, mFim] = s.fim.split(':').map(Number);
+                                let diff = (hFim * 60 + mFim) - (hIni * 60 + mIni);
+                                if (diff < 0) diff += 24 * 60; // Vira a noite
+                                horasCarregamentoEH += diff / 60;
+                            }
+                        });
+                    }
+                });
+
+                totalVolumeDia += prodEH;
+                totalHorasCarregamento += horasCarregamentoEH;
+
+                const produtividadeEH = horasCarregamentoEH > 0 ? (prodEH / horasCarregamentoEH).toFixed(1) : '0.0';
+                colHeader.innerHTML += `<div class="eh-stats">${produtividadeEH} m³/h</div>`;
+                headerCols.appendChild(colHeader);
+
+                // 2. Cria coluna no grid
+                const colGrid = document.createElement('div');
+                colGrid.className = 'eh-col';
+                colGrid.id = `eh-col-${tag}`;
+                gridCols.appendChild(colGrid);
+            });
+
+            // Stats globais do header do painel
+            if (tagsEH.length > 0) {
+                const produtividadeDia = totalHorasCarregamento > 0 ? (totalVolumeDia / totalHorasCarregamento).toFixed(2) : '0.00';
+                document.getElementById('eh-header-stats').innerHTML = `Produtividade Geral: ${produtividadeDia} m³/h | Vol: ${totalVolumeDia.toLocaleString('pt-BR')} m³`;
+            }
+
+            // 3. Desenha a Linha do Tempo
+            const timeAxis = document.getElementById('eh-time-axis');
+            timeAxis.innerHTML = '';
+            
+            // Vamos usar um range de 05:00 as 23:00 para a grade visual
+            const horaInicio = 5;
+            const horaFim = 23;
+            const alturaHora = 60; // 60px por hora
+
+            for (let h = horaInicio; h <= horaFim; h++) {
+                const mark = document.createElement('div');
+                mark.className = 'eh-time-mark';
+                mark.style.top = `${(h - horaInicio) * alturaHora}px`;
+                mark.textContent = `${String(h).padStart(2, '0')}:00`;
+                timeAxis.appendChild(mark);
+            }
+            // Altura total para rolagem
+            gridCols.style.height = `${(horaFim - horaInicio + 1) * alturaHora}px`;
+            timeAxis.style.height = gridCols.style.height;
+
+            // 4. Desenha os Eventos nos seus respectivos lugares
+            registrosDoDia.forEach(r => {
+                const col = document.getElementById(`eh-col-${r.tag}`);
+                if (!col) return;
+
+                if (r.status === 'trabalhou' && r.servicos) {
+                    r.servicos.forEach(s => {
+                        const [hIni, mIni] = s.ini.split(':').map(Number);
+                        const [hFim, mFim] = s.fim.split(':').map(Number);
+                        
+                        // Calcula a posição e altura visual
+                        const topPx = ((hIni + mIni/60) - horaInicio) * alturaHora;
+                        let alturaPx = ((hFim + mFim/60) - (hIni + mIni/60)) * alturaHora;
+                        if (alturaPx < 0) alturaPx += 24 * alturaHora; // Vira a noite
+                        if (topPx < 0 || topPx > (horaFim - horaInicio + 1) * alturaHora) return; // Fora da tela
+
+                        let corClasse = 'bg-carregamento';
+                        if (s.tipo === 'Almoço') corClasse = 'bg-almoco';
+                        if (s.tipo === 'Drenagem/Escavação') corClasse = 'bg-drenagem';
+                        if (s.tipo === 'Limpeza/Supressão') corClasse = 'bg-limpeza';
+
+                        const div = document.createElement('div');
+                        div.className = `eh-event ${corClasse}`;
+                        div.style.top = `${topPx}px`;
+                        div.style.height = `${alturaPx}px`;
+                        div.innerHTML = `
+                            <span class="evt-title">${s.tipo}</span>
+                            <span class="evt-time">${s.ini} - ${s.fim}</span>
+                        `;
+                        // Se passar do tamanho da coluna, corta
+                        col.appendChild(div);
+                    });
+                } else if (r.status === 'manutencao' || r.status === 'nao_trabalhou') {
+                    // Evento de dia inteiro
+                    const div = document.createElement('div');
+                    div.className = `eh-event bg-manutencao`;
+                    div.style.top = `0px`;
+                    div.style.height = `${(horaFim - horaInicio + 1) * alturaHora}px`;
+                    div.innerHTML = `
+                        <span class="evt-title">${r.status === 'manutencao' ? 'MANUTENÇÃO' : 'NÃO TRABALHOU'}</span>
+                        <span class="evt-time">${r.motivo}</span>
+                    `;
+                    col.appendChild(div);
+                }
+            });
         }
 
         function renderBotoesMeses() {
@@ -1101,38 +1508,62 @@
                 const [ano, mes, dia] = d.data.split('-');
                 return parseInt(ano) === anoSelecionadoProducao && parseInt(mes) === (mesSelecionadoProducao + 1);
             });
-            let producaoMes = 0, areiaMes = 0, horasMes = 0;
-            dadosMes.forEach(d => { producaoMes += d.volume; areiaMes += d.areia; horasMes += d.horas; });
+            let producaoMes = 0, areiaMes = 0;
+            dadosMes.forEach(d => { producaoMes += d.volume; areiaMes += d.areia; });
             let producaoTotal = dbProducao.reduce((acc, curr) => acc + curr.volume, 0);
-            let produtividadeMes = horasMes > 0 ? (producaoMes / horasMes) : 0;
 
             document.getElementById('kpi-mes').innerHTML = `${producaoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
             document.getElementById('kpi-total').innerHTML = `${producaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
-            document.getElementById('kpi-produtividade').innerHTML = `${produtividadeMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³/h</span>`;
             document.getElementById('kpi-areia').innerHTML = `${areiaMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
 
             const diasNoMes = new Date(anoSelecionadoProducao, mesSelecionadoProducao + 1, 0).getDate();
             const dadosDiarios = [];
+            let totalHorasMes = 0;
+
             for (let i = 1; i <= diasNoMes; i++) {
                 const dataStr = `${anoSelecionadoProducao}-${String(mesSelecionadoProducao + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                 const lancamentosDia = dadosMes.filter(d => d.data === dataStr);
-                let volTerra = 0, volSub = 0, volBase = 0, areiaDia = 0, horasDia = 0;
+                let volTerra = 0, volSub = 0, volBase = 0, areiaDia = 0;
+                
                 lancamentosDia.forEach(l => {
                     if (l.servico === 'Terraplenagem') volTerra += l.volume;
                     if (l.servico === 'Sub-base') volSub += l.volume;
                     if (l.servico === 'Base') volBase += l.volume;
-                    areiaDia += l.areia; horasDia += l.horas;
+                    areiaDia += l.areia;
                 });
-                dadosDiarios.push({ dia: i, terra: volTerra, sub: volSub, base: volBase, total: volTerra+volSub+volBase, areia: areiaDia, horas: horasDia });
+
+                // Puxa as horas de CARREGAMENTO do Controle EH para o dia
+                let horasCarregamentoDia = 0;
+                const regEHDia = dbControleEH.filter(r => r.data === dataStr && r.status === 'trabalhou');
+                regEHDia.forEach(r => {
+                    if (r.servicos) {
+                        r.servicos.forEach(s => {
+                            if (s.tipo === 'Carregamento') {
+                                const [hIni, mIni] = s.ini.split(':').map(Number);
+                                const [hFim, mFim] = s.fim.split(':').map(Number);
+                                let diff = (hFim * 60 + mFim) - (hIni * 60 + mIni);
+                                if (diff < 0) diff += 24 * 60;
+                                horasCarregamentoDia += diff / 60;
+                            }
+                        });
+                    }
+                });
+                
+                totalHorasMes += horasCarregamentoDia;
+                dadosDiarios.push({ dia: i, terra: volTerra, sub: volSub, base: volBase, total: volTerra+volSub+volBase, areia: areiaDia, horas: horasCarregamentoDia });
             }
-            renderGraficoPrincipal(dadosDiarios); renderGraficoEficiencia(dadosMes);
+
+            // Calcula produtividade média do mês
+            let produtividadeMes = totalHorasMes > 0 ? (producaoMes / totalHorasMes) : 0;
+            document.getElementById('kpi-produtividade').innerHTML = `${produtividadeMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³/h</span>`;
+
+            renderGraficoPrincipal(dadosDiarios);
         }
 
         function renderGraficoPrincipal(dadosDiarios) {
             const ctx = document.getElementById('graficoProducao').getContext('2d');
             if (graficoPrincipalInstance) graficoPrincipalInstance.destroy();
             const labels = dadosDiarios.map(d => {
-                const isDomingo = new Date(anoSelecionadoProducao, mesSelecionadoProducao, d.dia).getDay() === 0;
                 const prod = d.horas > 0 ? (d.total / d.horas).toFixed(0) : '0';
                 return [`${d.dia}`, `${prod} m³/h`];
             });
@@ -1198,27 +1629,6 @@
                         });
                     }
                 }]
-            });
-        }
-
-        function renderGraficoEficiencia(dadosMes) {
-            const ctx = document.getElementById('graficoEficiencia').getContext('2d');
-            if (graficoEficienciaInstance) graficoEficienciaInstance.destroy();
-            const eficienciaPorEH = {};
-            dadosMes.forEach(d => {
-                if (d.statusEh === 'Trabalhando' && d.horas > 0) {
-                    if (!eficienciaPorEH[d.eh]) eficienciaPorEH[d.eh] = { volume: 0, horas: 0 };
-                    eficienciaPorEH[d.eh].volume += d.volume; eficienciaPorEH[d.eh].horas += d.horas;
-                }
-            });
-            const labels = Object.keys(eficienciaPorEH);
-            const dataValores = labels.map(eh => (eficienciaPorEH[eh].volume / eficienciaPorEH[eh].horas).toFixed(2));
-            const bgColors = dataValores.map(val => val < 100 ? '#d32f2f' : (val >= 100 && val < 130 ? '#FFC000' : '#4CAF50'));
-
-            graficoEficienciaInstance = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Produtividade (m³/h)', data: dataValores, backgroundColor: bgColors, borderRadius: 5 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
         }
 
