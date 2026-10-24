@@ -53,7 +53,8 @@
             --bg-color: #F5F7FA; --text-dark: #333333;
             --text-light: #FFFFFF; --border-color: #E0E0E0; --card-bg: #FFFFFF;
             
-            --cor-carregamento: #4CAF50;
+            /* Alteração da cor do carregamento (O "Q" foi corrigido para "B" para ser um HEX válido) */
+            --cor-carregamento: #4BC27B; 
             --cor-almoco: #9E9E9E;
             --cor-drenagem: #03A9F4;
             --cor-limpeza: #FF9800;
@@ -75,9 +76,12 @@
         .sidebar-menu li.active { background-color: rgba(255, 192, 0, 0.15); border-left: 4px solid var(--sidebar-active); color: var(--sidebar-active); font-weight: bold; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Topbar ajustada para alinhar os itens à direita */
         .topbar { background-color: var(--primary); color: var(--text-light); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; border-bottom: 3px solid var(--secondary); }
-        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-weight: 500; margin-left: auto; } /* margin-left: auto joga para a direita */
         .topbar .avatar { width: 35px; height: 35px; border-radius: 50%; background-color: var(--secondary); display: flex; justify-content: center; align-items: center; color: var(--primary); font-weight: bold; font-size: 1.1rem; }
+        
         .workspace { flex: 1; padding: 20px; overflow-y: auto; position: relative; }
 
         .page-section { display: none; animation: fadeIn 0.3s ease; }
@@ -243,6 +247,7 @@
             <button class="menu-toggle" id="menu-toggle" style="display: none;">☰</button>
             <div style="font-weight: bold; display: none; color: var(--secondary);" id="mobile-title">EDECONSIL</div>
             
+            <!-- Auth container movido para a direita -->
             <div class="user-info">
                 <div id="auth-container" style="display: flex; align-items: center; gap: 10px;">
                     <button id="btn-login" class="btn btn-sm btn-accent" style="display: none;">Entrar com Google</button>
@@ -536,40 +541,25 @@
             <form id="form-pde">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Status da Escavadeira</label>
-                        <select class="form-control" id="pde-status" required onchange="togglePdeFields()">
-                            <option value="trabalhou">Trabalhou</option>
-                            <option value="manutencao">Em Manutenção</option>
-                            <option value="nao_trabalhou">Não Trabalhou</option>
-                        </select>
+                        <label>Tag da EH *</label>
+                        <input type="text" class="form-control" id="pde-tag" required placeholder="Ex: EH-62">
                     </div>
-                    <div class="form-group"><label>Tag da EH *</label><input type="text" class="form-control" id="pde-tag" required placeholder="Ex: EH-62"></div>
+                    <div class="form-group"><label>Data</label><input type="date" class="form-control" id="pde-data" required></div>
                 </div>
 
-                <!-- Campos se Trabalhou -->
-                <div id="pde-campos-trabalho">
-                    <div class="form-row">
-                        <div class="form-group"><label>Nome do Operador</label><input type="text" class="form-control" id="pde-operador"></div>
-                        <div class="form-group"><label>Data</label><input type="date" class="form-control" id="pde-data" required></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Horímetro Inicial</label><input type="number" class="form-control" id="pde-horimetro-ini" step="0.1"></div>
-                        <div class="form-group"><label>Horímetro Final</label><input type="number" class="form-control" id="pde-horimetro-fim" step="0.1"></div>
-                    </div>
-                    
-                    <div style="border-top: 1px solid #ccc; margin: 15px 0; padding-top: 15px;">
-                        <h4 style="margin-bottom: 10px; color: var(--primary); font-size: 1rem;">Adicionar Serviços (Horários)</h4>
-                        <div id="pde-servicos-list" style="margin-bottom: 10px;"></div>
-                        <button type="button" class="btn btn-sm btn-outline" onclick="addServicoPDE()">➕ Adicionar Serviço</button>
-                    </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Nome do Operador</label><input type="text" class="form-control" id="pde-operador"></div>
+                    <div class="form-group"><label>Horímetro Inicial</label><input type="number" class="form-control" id="pde-horimetro-ini" step="0.1"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Horímetro Final</label><input type="number" class="form-control" id="pde-horimetro-fim" step="0.1"></div>
+                    <div class="form-group" style="display:none;"> <!-- Espaço reservado para manter o grid alinhado --> </div>
                 </div>
 
-                <!-- Campos se Manutenção ou Não Trabalhou -->
-                <div id="pde-campos-justificativa" style="display: none;">
-                    <div class="form-group">
-                        <label id="pde-label-justificativa">Descrição do Problema / Motivo</label>
-                        <textarea class="form-control" id="pde-motivo" rows="3"></textarea>
-                    </div>
+                <div style="border-top: 1px solid #ccc; margin: 15px 0; padding-top: 15px;">
+                    <h4 style="margin-bottom: 10px; color: var(--primary); font-size: 1rem;">Adicionar Serviços / situação (Horários)</h4>
+                    <div id="pde-servicos-list" style="margin-bottom: 10px;"></div>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="addServicoPDE()">➕ Adicionar Serviço / Situação</button>
                 </div>
 
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
@@ -1170,7 +1160,7 @@
         // LÓGICA DA PRODUÇÃO E CONTROLE EH (LOCALSTORAGE)
         // =========================================
         let dbProducao = JSON.parse(localStorage.getItem('edeconsil_producao')) || [];
-        let dbControleEH = JSON.parse(localStorage.getItem('edeconsil_controle_eh')) || []; // {id, data, tag, status, operador, horimetroIni, horimetroFim, servicos: [], motivo}
+        let dbControleEH = JSON.parse(localStorage.getItem('edeconsil_controle_eh')) || [];
         let metaDiaria = parseInt(localStorage.getItem('edeconsil_meta')) || 4000;
         let graficoPrincipalInstance = null;
         let mesSelecionadoProducao = new Date().getMonth();
@@ -1232,8 +1222,6 @@
             document.getElementById('btn-add-pde').addEventListener('click', () => {
                 document.getElementById('form-pde').reset();
                 document.getElementById('pde-data').value = ehDataSelecionada;
-                document.getElementById('pde-status').value = 'trabalhou';
-                togglePdeFields();
                 document.getElementById('pde-servicos-list').innerHTML = '';
                 addServicoPDE(); // Adiciona uma linha em branco por padrão
                 document.getElementById('pde-modal').style.display = 'flex';
@@ -1243,29 +1231,23 @@
 
             document.getElementById('form-pde').addEventListener('submit', (e) => {
                 e.preventDefault();
-                const status = document.getElementById('pde-status').value;
                 const record = {
                     id: Date.now(),
                     data: document.getElementById('pde-data').value,
                     tag: document.getElementById('pde-tag').value.toUpperCase(),
-                    status: status
+                    operador: document.getElementById('pde-operador').value,
+                    horimetroIni: parseFloat(document.getElementById('pde-horimetro-ini').value) || 0,
+                    horimetroFim: parseFloat(document.getElementById('pde-horimetro-fim').value) || 0,
+                    servicos: []
                 };
 
-                if (status === 'trabalhou') {
-                    record.operador = document.getElementById('pde-operador').value;
-                    record.horimetroIni = parseFloat(document.getElementById('pde-horimetro-ini').value) || 0;
-                    record.horimetroFim = parseFloat(document.getElementById('pde-horimetro-fim').value) || 0;
-                    record.servicos = [];
-                    // Pega as linhas de serviço adicionadas
-                    document.querySelectorAll('.pde-servico-row').forEach(row => {
-                        const tipo = row.querySelector('.pde-serv-tipo').value;
-                        const ini = row.querySelector('.pde-serv-ini').value;
-                        const fim = row.querySelector('.pde-serv-fim').value;
-                        if (ini && fim) record.servicos.push({ tipo, ini, fim });
-                    });
-                } else {
-                    record.motivo = document.getElementById('pde-motivo').value;
-                }
+                // Pega as linhas de serviço adicionadas
+                document.querySelectorAll('.pde-servico-row').forEach(row => {
+                    const tipo = row.querySelector('.pde-serv-tipo').value;
+                    const ini = row.querySelector('.pde-serv-ini').value;
+                    const fim = row.querySelector('.pde-serv-fim').value;
+                    if (ini && fim) record.servicos.push({ tipo, ini, fim });
+                });
 
                 dbControleEH.push(record);
                 localStorage.setItem('edeconsil_controle_eh', JSON.stringify(dbControleEH));
@@ -1281,29 +1263,6 @@
             renderDashboardProducao();
         }
 
-        function togglePdeFields() {
-            const status = document.getElementById('pde-status').value;
-            const camposTrabalho = document.getElementById('pde-campos-trabalho');
-            const camposJustificativa = document.getElementById('pde-campos-justificativa');
-            const labelJustificativa = document.getElementById('pde-label-justificativa');
-            const inputMotivo = document.getElementById('pde-motivo');
-
-            if (status === 'trabalhou') {
-                camposTrabalho.style.display = 'block';
-                camposJustificativa.style.display = 'none';
-                document.getElementById('pde-operador').required = true;
-            } else {
-                camposTrabalho.style.display = 'none';
-                camposJustificativa.style.display = 'block';
-                document.getElementById('pde-operador').required = false;
-                if (status === 'manutencao') {
-                    labelJustificativa.innerText = 'Qual o problema da Manutenção?';
-                } else {
-                    labelJustificativa.innerText = 'Qual o motivo de não ter trabalhado?';
-                }
-            }
-        }
-
         function addServicoPDE() {
             const container = document.getElementById('pde-servicos-list');
             const div = document.createElement('div');
@@ -1316,6 +1275,7 @@
                         <option value="Almoço">Almoço</option>
                         <option value="Drenagem/Escavação">Drenagem/Escavação</option>
                         <option value="Limpeza/Supressão">Limpeza/Supressão</option>
+                        <option value="Manutenção">Manutenção</option>
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:0; display:flex; gap:5px;">
@@ -1391,7 +1351,7 @@
                 
                 const regEH = registrosDoDia.filter(r => r.tag === tag);
                 regEH.forEach(r => {
-                    if (r.status === 'trabalhou' && r.servicos) {
+                    if (r.servicos) {
                         r.servicos.forEach(s => {
                             if (s.tipo === 'Carregamento') {
                                 const [hIni, mIni] = s.ini.split(':').map(Number);
@@ -1449,7 +1409,7 @@
                 const col = document.getElementById(`eh-col-${r.tag}`);
                 if (!col) return;
 
-                if (r.status === 'trabalhou' && r.servicos) {
+                if (r.servicos) {
                     r.servicos.forEach(s => {
                         const [hIni, mIni] = s.ini.split(':').map(Number);
                         const [hFim, mFim] = s.fim.split(':').map(Number);
@@ -1464,6 +1424,7 @@
                         if (s.tipo === 'Almoço') corClasse = 'bg-almoco';
                         if (s.tipo === 'Drenagem/Escavação') corClasse = 'bg-drenagem';
                         if (s.tipo === 'Limpeza/Supressão') corClasse = 'bg-limpeza';
+                        if (s.tipo === 'Manutenção') corClasse = 'bg-manutencao';
 
                         const div = document.createElement('div');
                         div.className = `eh-event ${corClasse}`;
@@ -1476,17 +1437,6 @@
                         // Se passar do tamanho da coluna, corta
                         col.appendChild(div);
                     });
-                } else if (r.status === 'manutencao' || r.status === 'nao_trabalhou') {
-                    // Evento de dia inteiro
-                    const div = document.createElement('div');
-                    div.className = `eh-event bg-manutencao`;
-                    div.style.top = `0px`;
-                    div.style.height = `${(horaFim - horaInicio + 1) * alturaHora}px`;
-                    div.innerHTML = `
-                        <span class="evt-title">${r.status === 'manutencao' ? 'MANUTENÇÃO' : 'NÃO TRABALHOU'}</span>
-                        <span class="evt-time">${r.motivo}</span>
-                    `;
-                    col.appendChild(div);
                 }
             });
         }
@@ -1534,7 +1484,7 @@
 
                 // Puxa as horas de CARREGAMENTO do Controle EH para o dia
                 let horasCarregamentoDia = 0;
-                const regEHDia = dbControleEH.filter(r => r.data === dataStr && r.status === 'trabalhou');
+                const regEHDia = dbControleEH.filter(r => r.data === dataStr);
                 regEHDia.forEach(r => {
                     if (r.servicos) {
                         r.servicos.forEach(s => {
