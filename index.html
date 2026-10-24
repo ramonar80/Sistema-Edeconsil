@@ -53,12 +53,15 @@
             --bg-color: #F5F7FA; --text-dark: #333333;
             --text-light: #FFFFFF; --border-color: #E0E0E0; --card-bg: #FFFFFF;
             
-            /* Alteração da cor do carregamento (O "Q" foi corrigido para "B" para ser um HEX válido) */
+            /* Cores dos balões */
             --cor-carregamento: #4BC27B; 
             --cor-almoco: #9E9E9E;
             --cor-drenagem: #03A9F4;
             --cor-limpeza: #FF9800;
             --cor-manutencao: #F44336;
+            --cor-revisao: #E65100; /* Laranja Escuro */
+            --cor-nao_trabalhou: #424242; /* Cinza Escuro */
+            --cor-disposicao: #673AB7; /* Roxo */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -77,9 +80,8 @@
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* Topbar ajustada para alinhar os itens à direita */
         .topbar { background-color: var(--primary); color: var(--text-light); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; border-bottom: 3px solid var(--secondary); }
-        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-weight: 500; margin-left: auto; } /* margin-left: auto joga para a direita */
+        .topbar .user-info { display: flex; align-items: center; gap: 10px; font-weight: 500; margin-left: auto; }
         .topbar .avatar { width: 35px; height: 35px; border-radius: 50%; background-color: var(--secondary); display: flex; justify-content: center; align-items: center; color: var(--primary); font-weight: bold; font-size: 1.1rem; }
         
         .workspace { flex: 1; padding: 20px; overflow-y: auto; position: relative; }
@@ -187,24 +189,47 @@
         .eh-col { flex: 1; border-right: 1px solid var(--border-color); position: relative; min-width: 150px; background: #fff; }
         .eh-col:last-child { border-right: none; }
         
-        .eh-event { position: absolute; left: 5px; right: 5px; border-radius: 5px; padding: 5px; font-size: 0.75rem; color: #fff; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.2); border-left: 3px solid rgba(0,0,0,0.2); }
-        .eh-event .evt-title { font-weight: bold; display: block; margin-bottom: 2px; }
-        .eh-event .evt-time { font-size: 0.7rem; opacity: 0.9; }
+        /* BALÕES MAIS TRANSPARENTES E TEXTO FORTE */
+        .eh-event { 
+            position: absolute; left: 5px; right: 5px; border-radius: 5px; 
+            padding: 5px; font-size: 0.85rem; /* Aumentei um pouco a fonte */
+            overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            border-left: 4px solid;
+            background-color: rgba(255, 255, 255, 0.85); /* Fundo mais claro/suave */
+            backdrop-filter: blur(2px);
+        }
+        .eh-event .evt-title { font-weight: 900; display: block; margin-bottom: 2px; color: #111; }
+        .eh-event .evt-time { font-size: 0.75rem; font-weight: bold; color: #333; }
         
-        .bg-carregamento { background-color: var(--cor-carregamento); }
-        .bg-almoco { background-color: var(--cor-almoco); }
-        .bg-drenagem { background-color: var(--cor-drenagem); }
-        .bg-limpeza { background-color: var(--cor-limpeza); }
-        .bg-manutencao { background-color: var(--cor-manutencao); }
+        /* Cores das bordas e texto baseadas no status */
+        .eh-event.bg-carregamento { border-left-color: var(--cor-carregamento); }
+        .eh-event.bg-carregamento .evt-title { color: #004d1a; }
+        .eh-event.bg-almoco { border-left-color: var(--cor-almoco); }
+        .eh-event.bg-almoco .evt-title { color: #333; }
+        .eh-event.bg-drenagem { border-left-color: var(--cor-drenagem); }
+        .eh-event.bg-drenagem .evt-title { color: #01579b; }
+        .eh-event.bg-limpeza { border-left-color: var(--cor-limpeza); }
+        .eh-event.bg-limpeza .evt-title { color: #bf360c; }
+        .eh-event.bg-manutencao { border-left-color: var(--cor-manutencao); }
+        .eh-event.bg-manutencao .evt-title { color: #b71c1c; }
+        
+        /* Novas cores */
+        .eh-event.bg-revisao { border-left-color: var(--cor-revisao); }
+        .eh-event.bg-revisao .evt-title { color: #e65100; }
+        .eh-event.bg-nao_trabalhou { border-left-color: var(--cor-nao_trabalhou); }
+        .eh-event.bg-nao_trabalhou .evt-title { color: #424242; }
+        .eh-event.bg-disposicao { border-left-color: var(--cor-disposicao); }
+        .eh-event.bg-disposicao .evt-title { color: #673ab7; }
 
         .legend-container { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px; font-size: 0.8rem; }
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color { width: 15px; height: 15px; border-radius: 3px; }
 
+        /* MOBILE FIRST */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .menu-toggle { display: block; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-            .sidebar { position: fixed; top: 0; left: -250px; height: 100vh; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
+            .sidebar { position: fixed; top: 0; left: -280px; height: 100vh; box-shadow: 2px 0 10px rgba(0,0,0,0.2); width: 260px; }
             .sidebar.open { left: 0; }
             .close-sidebar { display: block; }
             .layout-grid { grid-template-columns: 1fr; height: auto; }
@@ -216,6 +241,10 @@
             .form-row { grid-template-columns: 1fr; }
             .activity-card { flex-direction: column; gap: 10px; }
             .chart-controls { flex-direction: column; align-items: flex-start; }
+            
+            /* Rolagem lateral do grid de EH */
+            .eh-grid { overflow-x: auto; }
+            .eh-columns-header { overflow-x: auto; }
         }
     </style>
 </head>
@@ -247,7 +276,6 @@
             <button class="menu-toggle" id="menu-toggle" style="display: none;">☰</button>
             <div style="font-weight: bold; display: none; color: var(--secondary);" id="mobile-title">EDECONSIL</div>
             
-            <!-- Auth container movido para a direita -->
             <div class="user-info">
                 <div id="auth-container" style="display: flex; align-items: center; gap: 10px;">
                     <button id="btn-login" class="btn btn-sm btn-accent" style="display: none;">Entrar com Google</button>
@@ -367,6 +395,9 @@
                                 <div class="legend-item"><div class="legend-color" style="background: var(--cor-drenagem);"></div> Drenagem/Escavação</div>
                                 <div class="legend-item"><div class="legend-color" style="background: var(--cor-limpeza);"></div> Limpeza/Supressão</div>
                                 <div class="legend-item"><div class="legend-color" style="background: var(--cor-manutencao);"></div> Manutenção</div>
+                                <div class="legend-item"><div class="legend-color" style="background: var(--cor-revisao);"></div> Revisão Preventiva</div>
+                                <div class="legend-item"><div class="legend-color" style="background: var(--cor-nao_trabalhou);"></div> Não Trabalhou</div>
+                                <div class="legend-item"><div class="legend-color" style="background: var(--cor-disposicao);"></div> À Disposição</div>
                             </div>
                         </div>
 
@@ -553,7 +584,7 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>Horímetro Final</label><input type="number" class="form-control" id="pde-horimetro-fim" step="0.1"></div>
-                    <div class="form-group" style="display:none;"> <!-- Espaço reservado para manter o grid alinhado --> </div>
+                    <div class="form-group" style="display:none;"> <!-- Espaço reservado --> </div>
                 </div>
 
                 <div style="border-top: 1px solid #ccc; margin: 15px 0; padding-top: 15px;">
@@ -741,9 +772,8 @@
         let unsubscribeDiario = null;
         let editandoIdDiario = null; 
 
-        // LISTA DE E-MAILS QUE PODEM EDITAR (COLOQUE O SEU E-MAIL AQUI)
         const emailsPermitidos = [
-            "ramonaraujoojs@gmail.com" // <-- TROQUE PELO SEU E-MAIL DO GOOGLE
+            "ramonaraujoojs@gmail.com" 
         ];
         let isAdmin = false;
 
@@ -1276,6 +1306,9 @@
                         <option value="Drenagem/Escavação">Drenagem/Escavação</option>
                         <option value="Limpeza/Supressão">Limpeza/Supressão</option>
                         <option value="Manutenção">Manutenção</option>
+                        <option value="Revisão Preventiva">Revisão Preventiva</option>
+                        <option value="Não trabalhou">Não trabalhou</option>
+                        <option value="À disposição">À disposição</option>
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:0; display:flex; gap:5px;">
@@ -1425,6 +1458,9 @@
                         if (s.tipo === 'Drenagem/Escavação') corClasse = 'bg-drenagem';
                         if (s.tipo === 'Limpeza/Supressão') corClasse = 'bg-limpeza';
                         if (s.tipo === 'Manutenção') corClasse = 'bg-manutencao';
+                        if (s.tipo === 'Revisão Preventiva') corClasse = 'bg-revisao';
+                        if (s.tipo === 'Não trabalhou') corClasse = 'bg-nao_trabalhou';
+                        if (s.tipo === 'À disposição') corClasse = 'bg-disposicao';
 
                         const div = document.createElement('div');
                         div.className = `eh-event ${corClasse}`;
