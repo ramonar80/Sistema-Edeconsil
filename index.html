@@ -247,9 +247,9 @@
         </div>
         <ul class="sidebar-menu">
             <li class="menu-item active" data-target="page-diario"><span>📋</span> Diário de Obra</li>
-            <li class="menu-item" data-target="page-producao"><span>📊</span> Produção</li>
-            <li class="menu-item" data-target="page-materiais"><span>📦</span> Materiais</li>
-            <li class="menu-item" data-target="page-apresentacao"><span>📺</span> Apresentação</li>
+            <li class="menu-item" data-target="page-producao" id="menu-producao"><span>📊</span> Produção</li>
+            <li class="menu-item" data-target="page-materiais" id="menu-materiais"><span>📦</span> Materiais</li>
+            <li class="menu-item" data-target="page-apresentacao" id="menu-apresentacao"><span>📺</span> Apresentação</li>
         </ul>
     </nav>
 
@@ -776,7 +776,7 @@
     <!-- SCRIPT PRINCIPAL -->
     <script>
         // =========================================
-        // VARIÁVEIS GLOBAIS
+        // VARIÁVEIS GLOBAIS E PERMISSÕES
         // =========================================
         let currentDate = new Date();
         let selectedDate = new Date().toISOString().split('T')[0];
@@ -786,8 +786,19 @@
         let unsubscribeDiario = null;
         let editandoIdDiario = null; 
 
-        const emailsPermitidos = [ "ramonaraujoojs@gmail.com" ];
+        // =========================================
+        // CONTROLE DE ACESSO (sincronizado com firestore.rules)
+        // =========================================
+        const admins = [ "ramonaraujoojs@gmail.com" ]; 
+        const colaboradoresDiario = [ "mv2645327@gmail.com" ]; 
+
         let isAdmin = false;
+        let isColaboradorDiario = false;
+
+        // Helper de checagem defensiva (extra, além das regras do Firestore)
+        function podeEscreverDiario() {
+            return isAdmin || isColaboradorDiario;
+        }
 
         // =========================================
         // INICIALIZAÇÃO GERAL
@@ -848,26 +859,66 @@
                     userEmail.style.display = 'block';
                     userEmail.innerText = user.email;
 
-                    if (emailsPermitidos.includes(user.email)) {
-                        isAdmin = true;
-                        document.getElementById('btn-new-entry').style.display = 'flex';
-                        document.getElementById('btn-add-lancamento').style.display = 'flex';
-                        document.getElementById('btn-add-pde').style.display = 'flex';
-                    } else {
-                        isAdmin = false;
-                        document.getElementById('btn-new-entry').style.display = 'none';
-                        document.getElementById('btn-add-lancamento').style.display = 'none';
-                        document.getElementById('btn-add-pde').style.display = 'none';
-                        alert("Você está logado como visualizador. Não pode lançar dados.");
-                    }
-                } else {
-                    isAdmin = false;
-                    btnLogin.style.display = 'block';
-                    btnLogout.style.display = 'none';
-                    userEmail.style.display = 'none';
+                    // Define permissões conforme o e-mail autenticado
+                    isAdmin = admins.includes(user.email);
+                    isColaboradorDiario = colaboradoresDiario.includes(user.email);
+
+                    // Esconde todos os itens de criação por padrão
+                    document.getElementById('menu-producao').style.display = 'none';
+                    document.getElementById('menu-materiais').style.display = 'none';
+                    document.getElementById('menu-apresentacao').style.display = 'none';
                     document.getElementById('btn-new-entry').style.display = 'none';
                     document.getElementById('btn-add-lancamento').style.display = 'none';
                     document.getElementById('btn-add-pde').style.display = 'none';
+                    document.getElementById('btn-iniciar-apresentacao').style.display = 'none';
+                    document.getElementById('btn-gerenciar-tanques').style.display = 'none';
+                    document.getElementById('btn-entrada-material').style.display = 'none';
+                    document.getElementById('btn-saida-material').style.display = 'none';
+                    document.getElementById('btn-agregado-entrada').style.display = 'none';
+                    document.getElementById('btn-agregado-saida').style.display = 'none';
+                    document.getElementById('form-add-midia').style.display = 'none';
+
+                    if (isAdmin) {
+                        // ADMIN: libera tudo
+                        document.getElementById('menu-producao').style.display = 'flex';
+                        document.getElementById('menu-materiais').style.display = 'flex';
+                        document.getElementById('menu-apresentacao').style.display = 'flex';
+                        document.getElementById('btn-new-entry').style.display = 'flex';
+                        document.getElementById('btn-add-lancamento').style.display = 'flex';
+                        document.getElementById('btn-add-pde').style.display = 'flex';
+                        document.getElementById('btn-iniciar-apresentacao').style.display = 'flex';
+                        document.getElementById('btn-gerenciar-tanques').style.display = 'flex';
+                        document.getElementById('btn-entrada-material').style.display = 'flex';
+                        document.getElementById('btn-saida-material').style.display = 'flex';
+                        document.getElementById('btn-agregado-entrada').style.display = 'flex';
+                        document.getElementById('btn-agregado-saida').style.display = 'flex';
+                        document.getElementById('form-add-midia').style.display = 'block';
+                    } else if (isColaboradorDiario) {
+                        // COLABORADOR DO DIÁRIO: apenas o Diário + botão Novo Registro
+                        document.getElementById('btn-new-entry').style.display = 'flex';
+                    } else {
+                        alert("Você está logado como visualizador. Não pode lançar dados.");
+                    }
+                } else {
+                    // Deslogado: sem permissões
+                    isAdmin = false;
+                    isColaboradorDiario = false;
+                    btnLogin.style.display = 'block';
+                    btnLogout.style.display = 'none';
+                    userEmail.style.display = 'none';
+                    document.getElementById('menu-producao').style.display = 'flex';
+                    document.getElementById('menu-materiais').style.display = 'flex';
+                    document.getElementById('menu-apresentacao').style.display = 'flex';
+                    document.getElementById('btn-new-entry').style.display = 'none';
+                    document.getElementById('btn-add-lancamento').style.display = 'none';
+                    document.getElementById('btn-add-pde').style.display = 'none';
+                    document.getElementById('btn-iniciar-apresentacao').style.display = 'none';
+                    document.getElementById('btn-gerenciar-tanques').style.display = 'none';
+                    document.getElementById('btn-entrada-material').style.display = 'none';
+                    document.getElementById('btn-saida-material').style.display = 'none';
+                    document.getElementById('btn-agregado-entrada').style.display = 'none';
+                    document.getElementById('btn-agregado-saida').style.display = 'none';
+                    document.getElementById('form-add-midia').style.display = 'none';
                 }
                 if (typeof loadDayActivities === 'function') loadDayActivities(selectedDate);
                 if (typeof renderPainelEH === 'function') renderPainelEH();
@@ -893,6 +944,7 @@
             document.getElementById('next-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); updateCalendarHeader(); renderCalendar(); });
             
             document.getElementById('btn-new-entry').addEventListener('click', () => {
+                if (!podeEscreverDiario()) return alert("Você não tem permissão para lançar registros.");
                 editandoIdDiario = null;
                 document.getElementById('btn-submit-diario').innerText = 'Salvar Registro';
                 document.getElementById('form-card').style.display = 'block';
@@ -1009,7 +1061,7 @@
 
         async function saveActivity(e) {
             e.preventDefault();
-            if (!isAdmin) return alert("Apenas administradores podem salvar registros.");
+            if (!podeEscreverDiario()) return alert("Você não tem permissão para salvar registros.");
             if (!window.firebaseReady) return alert("Aguarde a conexão com a nuvem.");
 
             const btnSubmit = document.getElementById('btn-submit-diario');
@@ -1243,6 +1295,7 @@
             metaInput.addEventListener('change', (e) => { metaDiaria = parseFloat(e.target.value) || 0; localStorage.setItem('edeconsil_meta', metaDiaria); renderDashboardProducao(); });
 
             document.getElementById('btn-add-lancamento').addEventListener('click', () => {
+                if (!isAdmin) return alert("Apenas administradores.");
                 const hoje = new Date();
                 let dataDefault = `${anoSelecionadoProducao}-${String(mesSelecionadoProducao + 1).padStart(2, '0')}-01`;
                 if (hoje.getMonth() === mesSelecionadoProducao && hoje.getFullYear() === anoSelecionadoProducao) { dataDefault = hoje.toISOString().split('T')[0]; }
@@ -1278,6 +1331,7 @@
             });
 
             document.getElementById('btn-add-pde').addEventListener('click', () => {
+                if (!isAdmin) return alert("Apenas administradores.");
                 document.getElementById('form-pde').reset();
                 document.getElementById('pde-data').value = ehDataSelecionada;
                 document.getElementById('pde-servicos-list').innerHTML = '';
@@ -1692,6 +1746,7 @@
             });
 
             document.getElementById('btn-gerenciar-tanques').addEventListener('click', () => {
+                if (!isAdmin) return alert("Apenas administradores.");
                 document.getElementById('form-tanque').reset();
                 document.getElementById('campos-cilindrico').style.display = 'block';
                 document.getElementById('campos-eliptico').style.display = 'none';
@@ -1700,6 +1755,7 @@
 
             document.getElementById('form-tanque').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
                 const tipo = document.getElementById('tanque-tipo').value;
                 const novoTanque = { tag: document.getElementById('tanque-tag').value.toUpperCase(), material: document.getElementById('tanque-material').value, tipo: tipo, nivelAtual: 0, volumeAtual: 0, capacidadeTotal: 0 };
                 if (tipo === 'cilindrico') {
@@ -1718,6 +1774,7 @@
 
             document.getElementById('form-regua').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
                 const id = document.getElementById('regua-id').value;
                 const alturaLiquido = parseFloat(document.getElementById('regua-altura').value);
                 const tanque = dbTanques.find(t => t.id === id);
@@ -1738,11 +1795,18 @@
                 }
             });
 
-            document.getElementById('btn-entrada-material').addEventListener('click', () => { document.getElementById('mov-titulo').textContent = 'Registrar Entrada'; document.getElementById('mov-tipo').value = 'entrada'; document.getElementById('mov-label-doc').textContent = 'Nº Nota Fiscal'; document.getElementById('mov-label-pessoa').textContent = 'Fornecedor / Quem Recebeu'; document.getElementById('mov-grupo-lab').style.display = 'block'; document.getElementById('form-movimentacao').reset(); document.getElementById('mov-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-movimentacao').style.display = 'flex'; });
-            document.getElementById('btn-saida-material').addEventListener('click', () => { document.getElementById('mov-titulo').textContent = 'Registrar Saída'; document.getElementById('mov-tipo').value = 'saida'; document.getElementById('mov-label-doc').textContent = 'Nº Doc / OS'; document.getElementById('mov-label-pessoa').textContent = 'Destino Final / Responsável'; document.getElementById('mov-grupo-lab').style.display = 'none'; document.getElementById('form-movimentacao').reset(); document.getElementById('mov-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-movimentacao').style.display = 'flex'; });
+            document.getElementById('btn-entrada-material').addEventListener('click', () => { 
+                if (!isAdmin) return alert("Apenas administradores.");
+                document.getElementById('mov-titulo').textContent = 'Registrar Entrada'; document.getElementById('mov-tipo').value = 'entrada'; document.getElementById('mov-label-doc').textContent = 'Nº Nota Fiscal'; document.getElementById('mov-label-pessoa').textContent = 'Fornecedor / Quem Recebeu'; document.getElementById('mov-grupo-lab').style.display = 'block'; document.getElementById('form-movimentacao').reset(); document.getElementById('mov-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-movimentacao').style.display = 'flex'; 
+            });
+            document.getElementById('btn-saida-material').addEventListener('click', () => { 
+                if (!isAdmin) return alert("Apenas administradores.");
+                document.getElementById('mov-titulo').textContent = 'Registrar Saída'; document.getElementById('mov-tipo').value = 'saida'; document.getElementById('mov-label-doc').textContent = 'Nº Doc / OS'; document.getElementById('mov-label-pessoa').textContent = 'Destino Final / Responsável'; document.getElementById('mov-grupo-lab').style.display = 'none'; document.getElementById('form-movimentacao').reset(); document.getElementById('mov-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-movimentacao').style.display = 'flex'; 
+            });
 
             document.getElementById('form-movimentacao').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
                 const mov = { tipo: document.getElementById('mov-tipo').value, data: document.getElementById('mov-data').value, material: document.getElementById('mov-material').value, qtd: parseFloat(document.getElementById('mov-qtd').value), doc: document.getElementById('mov-doc').value, pessoa: document.getElementById('mov-pessoa').value, lab: document.getElementById('mov-grupo-lab').style.display === 'block' ? document.getElementById('mov-lab').value : '-', timestamp: new Date() };
                 await window.addDoc(window.collection(window.db, "movimentacoes"), mov);
                 document.getElementById('modal-movimentacao').style.display = 'none';
@@ -1758,12 +1822,19 @@
             });
             document.getElementById('btn-relatorio-pdf').addEventListener('click', gerarRelatorioPDF);
 
-            document.getElementById('btn-agregado-entrada').addEventListener('click', () => { document.getElementById('form-agr-entrada').reset(); document.getElementById('agr-ent-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-agr-entrada').style.display = 'flex'; });
-            document.getElementById('btn-agregado-saida').addEventListener('click', () => { document.getElementById('form-agr-saida').reset(); document.getElementById('agr-sai-data').value = new Date().toISOString().split('T')[0]; document.getElementById('campos-destino-obra').style.display = 'block'; document.getElementById('campos-destino-sub').style.display = 'none'; document.getElementById('modal-agr-saida').style.display = 'flex'; });
+            document.getElementById('btn-agregado-entrada').addEventListener('click', () => { 
+                if (!isAdmin) return alert("Apenas administradores.");
+                document.getElementById('form-agr-entrada').reset(); document.getElementById('agr-ent-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-agr-entrada').style.display = 'flex'; 
+            });
+            document.getElementById('btn-agregado-saida').addEventListener('click', () => { 
+                if (!isAdmin) return alert("Apenas administradores.");
+                document.getElementById('form-agr-saida').reset(); document.getElementById('agr-sai-data').value = new Date().toISOString().split('T')[0]; document.getElementById('campos-destino-obra').style.display = 'block'; document.getElementById('campos-destino-sub').style.display = 'none'; document.getElementById('modal-agr-saida').style.display = 'flex'; 
+            });
             document.getElementById('agr-sai-destino').addEventListener('change', (e) => { document.getElementById('campos-destino-obra').style.display = (e.target.value === 'obra') ? 'block' : 'none'; document.getElementById('campos-destino-sub').style.display = (e.target.value === 'subempreiteira') ? 'block' : 'none'; });
 
             document.getElementById('form-agr-entrada').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
                 const ent = { tipoMov: 'entrada', data: document.getElementById('agr-ent-data').value, material: document.getElementById('agr-ent-tipo').value, caminhao: document.getElementById('agr-ent-caminhao').value.toUpperCase(), transportador: document.getElementById('agr-ent-transportador').value, local: document.getElementById('agr-ent-local').value, qtd: parseFloat(document.getElementById('agr-ent-qtd').value), valor: parseFloat(document.getElementById('agr-ent-valor').value), nota: document.getElementById('agr-ent-nota').value, fornecedor: document.getElementById('agr-ent-fornecedor').value, motorista: document.getElementById('agr-ent-motorista').value, timestamp: new Date() };
                 await window.addDoc(window.collection(window.db, "agregados"), ent);
                 document.getElementById('modal-agr-entrada').style.display = 'none'; 
@@ -1771,6 +1842,7 @@
 
             document.getElementById('form-agr-saida').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
                 const carradas = parseFloat(document.getElementById('agr-sai-carradas').value); const capacidade = parseFloat(document.getElementById('agr-sai-capacidade').value); const destino = document.getElementById('agr-sai-destino').value;
                 const sai = { tipoMov: 'saida', data: document.getElementById('agr-sai-data').value, material: document.getElementById('agr-sai-tipo').value, caminhao: document.getElementById('agr-sai-caminhao').value.toUpperCase(), transportador: document.getElementById('agr-sai-transportador').value, local: document.getElementById('agr-sai-local').value, carradas: carradas, qtd: carradas * capacidade, destino: destino, servico: destino === 'obra' ? document.getElementById('agr-sai-servico').value : '-', estacaIni: destino === 'obra' ? document.getElementById('agr-sai-estaca-ini').value : '-', estacaFim: destino === 'obra' ? document.getElementById('agr-sai-estaca-fim').value : '-', subempreiteira: destino === 'subempreiteira' ? document.getElementById('agr-sai-nome-sub').value : '-', destinoFinal: destino === 'subempreiteira' ? document.getElementById('agr-sai-destino-final').value : '-', timestamp: new Date() };
                 await window.addDoc(window.collection(window.db, "agregados"), sai);
@@ -1834,6 +1906,7 @@
                     btn.style.cursor = 'pointer';
                     btn.innerHTML = `<span>${t.tag} (${t.material})</span> <span>📏 Medir</span>`;
                     btn.onclick = () => {
+                        if (!isAdmin) return alert("Apenas administradores.");
                         document.getElementById('regua-id').value = t.id;
                         document.getElementById('regua-tag').textContent = t.tag;
                         document.getElementById('regua-altura').value = t.nivelAtual;
@@ -2098,3 +2171,4 @@
     </script>
 </body>
 </html>
+     
