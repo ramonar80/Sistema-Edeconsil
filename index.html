@@ -212,6 +212,8 @@
         .fullscreen-player.active { display: flex; }
         .fullscreen-player iframe, .fullscreen-player img { max-width: 100%; max-height: 100%; object-fit: contain; border: none; }
         .btn-close-player { position: absolute; top: 20px; right: 30px; color: white; font-size: 2rem; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 10000;}
+        .btn-next-player { position: absolute; bottom: 30px; right: 30px; color: white; font-size: 1rem; background: rgba(0,0,0,0.6); border: none; border-radius: 8px; padding: 12px 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; z-index: 10000; font-weight: bold; }
+        .btn-next-player:hover { background: rgba(255,192,0,0.9); color: var(--primary); }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
@@ -525,6 +527,7 @@
     <!-- Tela Cheia do Player -->
     <div class="fullscreen-player" id="fullscreen-player">
         <button class="btn-close-player" id="btn-close-player">&times;</button>
+        <button class="btn-next-player" id="btn-next-player">Próximo ▶</button>
         <div id="player-content" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;"></div>
     </div>
 
@@ -2029,6 +2032,10 @@
                 const url = document.getElementById('media-url').value;
                 const tipo = document.getElementById('media-tipo').value;
 
+                if (tipo === 'imagem' && url.includes('drive.google.com/file/d/')) {
+                    return alert("Para imagens, o Google Drive não serve link direto.\n\nUse um link direto de imagem (ex: i.postimg.cc, lh3.googleusercontent.com, etc.) ou escolha a opção 'Vídeo' se for um vídeo do Drive.");
+                }
+
                 try {
                     await window.addDoc(window.collection(window.db, "apresentacao"), {
                         url: url,
@@ -2048,6 +2055,7 @@
             });
 
             document.getElementById('btn-close-player').addEventListener('click', pararPlayer);
+            document.getElementById('btn-next-player').addEventListener('click', proximaMidia);
 
             escutarMidias();
         }
@@ -2079,9 +2087,10 @@
                 if (m.tipo === 'video') {
                     const videoId = m.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
                     const embedUrl = videoId ? `https://drive.google.com/file/d/${videoId[1]}/preview` : m.url;
+                    // O preview pode ficar preto se o vídeo não estiver público (Qualquer pessoa com o link)
                     previewHtml = `<iframe src="${embedUrl}" class="media-preview" allow="autoplay" style="pointer-events: none;"></iframe>`;
                 } else {
-                    previewHtml = `<img src="${m.url}" class="media-preview">`;
+                    previewHtml = `<img src="${m.url}" class="media-preview" alt="Imagem">`;
                 }
 
                 card.innerHTML = `
@@ -2132,15 +2141,18 @@
             if (midia.tipo === 'video') {
                 const videoId = midia.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 if (videoId) {
+                    // REMOVIDO ?autoplay=1 para evitar bloqueio de autoplay do navegador.
+                    // O usuário pode clicar no botão "Próximo ▶" quando o vídeo terminar.
                     const iframe = document.createElement('iframe');
-                    iframe.src = `https://drive.google.com/file/d/${videoId[1]}/preview?autoplay=1`;
+                    iframe.src = `https://drive.google.com/file/d/${videoId[1]}/preview`;
                     iframe.width = "100%";
                     iframe.height = "100%";
                     iframe.allow = "autoplay";
                     iframe.style.border = "none";
                     content.appendChild(iframe);
                     
-                    midiaTimeout = setTimeout(proximaMidia, 120000); 
+                    // Timeout longo de segurança (10 min) caso o operador esqueça de clicar em "Próximo"
+                    midiaTimeout = setTimeout(proximaMidia, 600000); 
                 } else {
                     proximaMidia();
                 }
@@ -2149,6 +2161,7 @@
                 img.src = midia.url;
                 img.style.maxWidth = '100%';
                 img.style.maxHeight = '100%';
+                img.style.objectFit = 'contain';
                 content.appendChild(img);
 
                 midiaTimeout = setTimeout(proximaMidia, 5000);
@@ -2157,6 +2170,7 @@
 
         function proximaMidia() {
             if (!isPlaying) return;
+            if (midiaTimeout) clearTimeout(midiaTimeout);
             midiaAtualIndex++;
             if (midiaAtualIndex >= dbMidia.length) {
                 midiaAtualIndex = 0;
@@ -2171,4 +2185,3 @@
     </script>
 </body>
 </html>
-     
