@@ -123,6 +123,7 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #555; }
         .form-control { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9rem; }
+        .form-control:disabled { background-color: #e9ecef; cursor: not-allowed; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .empty-state { text-align: center; color: #999; font-size: 0.9rem; padding: 20px 0; }
 
@@ -212,8 +213,19 @@
         .fullscreen-player.active { display: flex; }
         .fullscreen-player iframe, .fullscreen-player img { max-width: 100%; max-height: 100%; object-fit: contain; border: none; }
         .btn-close-player { position: absolute; top: 20px; right: 30px; color: white; font-size: 2rem; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 10000;}
-        .btn-next-player { position: absolute; bottom: 30px; right: 30px; color: white; font-size: 1rem; background: rgba(0,0,0,0.6); border: none; border-radius: 8px; padding: 12px 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; z-index: 10000; font-weight: bold; }
-        .btn-next-player:hover { background: rgba(255,192,0,0.9); color: var(--primary); }
+        
+        /* Player controls: Prev / Next */
+        .player-controls {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; z-index: 10000;
+        }
+        .player-controls button {
+            background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 8px;
+            padding: 12px 20px; cursor: pointer; font-weight: bold; font-size: 1rem;
+            display: flex; align-items: center; gap: 8px; backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+        .player-controls button:hover { background: rgba(255,192,0,0.9); color: var(--primary); }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
@@ -504,12 +516,19 @@
                             <label for="media-url">Link da Mídia (Foto ou Vídeo)</label>
                             <input type="url" class="form-control" id="media-url" placeholder="Ex: https://lh3.googleusercontent.com/... ou https://drive.google.com/file/d/..." required>
                         </div>
-                        <div class="form-group">
-                            <label for="media-tipo">Tipo de Mídia</label>
-                            <select class="form-control" id="media-tipo" required>
-                                <option value="imagem">Imagem (Foto)</option>
-                                <option value="video">Vídeo (Google Drive)</option>
-                            </select>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="media-tipo">Tipo de Mídia</label>
+                                <select class="form-control" id="media-tipo" required>
+                                    <option value="imagem">Imagem (Foto)</option>
+                                    <option value="video">Vídeo (Google Drive)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="grupo-duracao" style="display: none;">
+                                <label for="media-duracao">Duração do vídeo (segundos)</label>
+                                <input type="number" class="form-control" id="media-duracao" min="1" placeholder="Ex: 90 (deixe em branco p/ manual)">
+                                <small style="color:#888; font-size:0.75rem; display:block; margin-top:4px;">Se preencher, avança sozinho nesse tempo.</small>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-accent">➕ Adicionar à Playlist</button>
                     </form>
@@ -527,7 +546,10 @@
     <!-- Tela Cheia do Player -->
     <div class="fullscreen-player" id="fullscreen-player">
         <button class="btn-close-player" id="btn-close-player">&times;</button>
-        <button class="btn-next-player" id="btn-next-player">Próximo ▶</button>
+        <div class="player-controls">
+            <button id="btn-prev-player">◀ Anterior</button>
+            <button id="btn-next-player">Próximo ▶</button>
+        </div>
         <div id="player-content" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;"></div>
     </div>
 
@@ -546,30 +568,67 @@
             <h3 style="color: var(--primary); margin-bottom: 20px;">Lançar Produção</h3>
             <form id="form-lancamento">
                 <div class="form-row">
-                    <div class="form-group"><label>Data</label><input type="date" class="form-control" id="lanc-date" required></div>
+                    <div class="form-group"><label>Data *</label><input type="date" class="form-control" id="lanc-date" required></div>
                     <div class="form-group"><label>Apontador</label><input type="text" class="form-control" id="lanc-apontador"></div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Tipo de Serviço</label>
+                        <label>Tipo de Serviço *</label>
                         <select class="form-control" id="lanc-servico" required>
-                            <option value="Terraplenagem">Terraplenagem (Amarelo)</option>
-                            <option value="Sub-base">Sub-base (Marrom)</option>
-                            <option value="Base">Base (Azul)</option>
+                            <option value="Terraplenagem">Terraplenagem</option>
+                            <option value="Sub-base">Sub-base</option>
+                            <option value="Base">Base</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>Estaca Inicial</label><input type="text" class="form-control" id="lanc-estaca-inicial"></div>
+                    <div class="form-group">
+                        <label>Tipo de Material *</label>
+                        <select class="form-control" id="lanc-material" required>
+                            <option value="Solo/Aterro">Solo / Aterro</option>
+                            <option value="Areia">Areia</option>
+                            <option value="Cascalho">Cascalho</option>
+                            <option value="Bota Fora">Bota Fora</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>Estaca Final</label><input type="text" class="form-control" id="lanc-estaca-final"></div>
-                    <div class="form-group"><label>Caminhão (CB)</label><input type="text" class="form-control" id="lanc-cb" required></div>
+                    <div class="form-group">
+                        <label>Local *</label>
+                        <select class="form-control" id="lanc-local" required>
+                            <option value="CAIXA DE EMPRÉSTIMO">Caixa de Empréstimo</option>
+                            <option value="JAZIDA">Jazida</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grupo-jazida" style="display: none;">
+                        <label>Nome da Jazida *</label>
+                        <input type="text" class="form-control" id="lanc-jazida" placeholder="Ex: Jazida Licon">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" id="grupo-estaca-origem">
+                        <label>Estaca de Origem</label>
+                        <input type="text" class="form-control" id="lanc-estaca-origem" placeholder="Ex: 1975 - 1978">
+                    </div>
+                    <div class="form-group">
+                        <label>Estaca Final (Destino) *</label>
+                        <input type="text" class="form-control" id="lanc-estaca-final" required placeholder="Ex: 1978 - 1988">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Trecho (Automático)</label>
+                        <input type="text" class="form-control" id="lanc-trecho" readonly style="background-color: #e9ecef; font-weight: bold; color: var(--primary);">
+                    </div>
+                    <div class="form-group">
+                        <label>Caminhão (CB) *</label>
+                        <input type="text" class="form-control" id="lanc-cb" required>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>Escavadeira (EH) *</label><input type="text" class="form-control" id="lanc-eh" required placeholder="Ex: EH-59"></div>
-                    <div class="form-group"><label>Carradas (und)</label><input type="number" class="form-control" id="lanc-carradas" min="1" required></div>
+                    <div class="form-group"><label>Carradas (und) *</label><input type="number" class="form-control" id="lanc-carradas" min="1" required></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>Capacidade (m³)</label><input type="number" class="form-control" id="lanc-capacidade" min="1" required></div>
+                    <div class="form-group"><label>Capacidade (m³) *</label><input type="number" class="form-control" id="lanc-capacidade" min="1" required></div>
                     <div class="form-group"><label>Areia Lançada (m³)</label><input type="number" class="form-control" id="lanc-areia" min="0" step="0.1"></div>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
@@ -1278,6 +1337,26 @@
         let unsubscribeProducao = null;
         let unsubscribeControleEH = null;
 
+        // Função para calcular o trecho baseado nas estacas (equivalente à fórmula Excel corrigida)
+        function calcularTrecho(estacaString) {
+            if (!estacaString) return '';
+            // Limpa a string para extrair os números (remove espaços, hífens, etc)
+            const partes = estacaString.split('-').map(p => parseInt(p.trim(), 10));
+            if (partes.length < 2 || isNaN(partes[0]) || isNaN(partes[1])) return 'Fora dos trechos';
+            
+            // Pega o menor e o maior valor para evitar erro se a estaca estiver invertida (ex: 1988 - 1978)
+            const estacaIni = Math.min(partes[0], partes[1]);
+            const estacaFim = Math.max(partes[0], partes[1]);
+
+            if (estacaIni <= 2150 && estacaFim >= 1986) return 'TER01';
+            if (estacaIni <= 1985 && estacaFim >= 1762) return 'TER02';
+            if (estacaIni <= 1761 && estacaFim >= 1545) return 'TER03';
+            if (estacaIni <= 1544 && estacaFim >= 1300) return 'TER04';
+            if (estacaIni <= 1299 && estacaFim >= 1079) return 'TER05';
+            
+            return 'Fora dos trechos';
+        }
+
         function initProducao() {
             document.getElementById('btn-tab-producao').addEventListener('click', () => {
                 document.getElementById('btn-tab-producao').classList.add('active');
@@ -1297,6 +1376,19 @@
             metaInput.value = metaDiaria;
             metaInput.addEventListener('change', (e) => { metaDiaria = parseFloat(e.target.value) || 0; localStorage.setItem('edeconsil_meta', metaDiaria); renderDashboardProducao(); });
 
+            // EVENTOS DO MODAL DE LANÇAMENTO
+            document.getElementById('lanc-local').addEventListener('change', (e) => {
+                const isJazida = e.target.value === 'JAZIDA';
+                document.getElementById('grupo-jazida').style.display = isJazida ? 'block' : 'none';
+                const campoOrigem = document.getElementById('lanc-estaca-origem');
+                campoOrigem.disabled = isJazida;
+                if (isJazida) campoOrigem.value = ''; // Limpa se desabilitar
+            });
+
+            document.getElementById('lanc-estaca-final').addEventListener('input', (e) => {
+                document.getElementById('lanc-trecho').value = calcularTrecho(e.target.value);
+            });
+
             document.getElementById('btn-add-lancamento').addEventListener('click', () => {
                 if (!isAdmin) return alert("Apenas administradores.");
                 const hoje = new Date();
@@ -1304,6 +1396,9 @@
                 if (hoje.getMonth() === mesSelecionadoProducao && hoje.getFullYear() === anoSelecionadoProducao) { dataDefault = hoje.toISOString().split('T')[0]; }
                 document.getElementById('lanc-date').value = dataDefault;
                 document.getElementById('form-lancamento').reset();
+                document.getElementById('grupo-jazida').style.display = 'none';
+                document.getElementById('lanc-estaca-origem').disabled = false;
+                document.getElementById('lanc-trecho').value = '';
                 document.getElementById('lancamento-modal').style.display = 'flex';
             });
 
@@ -1313,12 +1408,22 @@
             document.getElementById('form-lancamento').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!isAdmin) return alert("Apenas administradores.");
+                
+                const local = document.getElementById('lanc-local').value;
                 const lancamento = {
                     data: document.getElementById('lanc-date').value,
-                    apontador: document.getElementById('lanc-apontador').value, servico: document.getElementById('lanc-servico').value,
-                    estacaInicial: document.getElementById('lanc-estaca-inicial').value, estacaFinal: document.getElementById('lanc-estaca-final').value,
-                    cb: document.getElementById('lanc-cb').value.toUpperCase(), eh: document.getElementById('lanc-eh').value.toUpperCase(),
-                    carradas: parseFloat(document.getElementById('lanc-carradas').value), capacidade: parseFloat(document.getElementById('lanc-capacidade').value),
+                    apontador: document.getElementById('lanc-apontador').value, 
+                    servico: document.getElementById('lanc-servico').value,
+                    material: document.getElementById('lanc-material').value,
+                    local: local,
+                    jazidaNome: local === 'JAZIDA' ? document.getElementById('lanc-jazida').value : '',
+                    estacaOrigem: local === 'JAZIDA' ? '' : document.getElementById('lanc-estaca-origem').value,
+                    estacaFinal: document.getElementById('lanc-estaca-final').value,
+                    trecho: document.getElementById('lanc-trecho').value,
+                    cb: document.getElementById('lanc-cb').value.toUpperCase(), 
+                    eh: document.getElementById('lanc-eh').value.toUpperCase(),
+                    carradas: parseFloat(document.getElementById('lanc-carradas').value), 
+                    capacidade: parseFloat(document.getElementById('lanc-capacidade').value),
                     areia: parseFloat(document.getElementById('lanc-areia').value) || 0,
                     timestamp: new Date()
                 };
@@ -2025,24 +2130,35 @@
         let midiaTimeout = null;
 
         function initMidia() {
+            // Mostrar/ocultar campo de duração conforme o tipo
+            document.getElementById('media-tipo').addEventListener('change', (e) => {
+                document.getElementById('grupo-duracao').style.display = (e.target.value === 'video') ? 'block' : 'none';
+            });
+
             document.getElementById('form-add-midia').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!isAdmin) return alert("Apenas administradores podem adicionar mídias.");
 
                 const url = document.getElementById('media-url').value;
                 const tipo = document.getElementById('media-tipo').value;
+                let duracao = parseInt(document.getElementById('media-duracao').value);
 
                 if (tipo === 'imagem' && url.includes('drive.google.com/file/d/')) {
                     return alert("Para imagens, o Google Drive não serve link direto.\n\nUse um link direto de imagem (ex: i.postimg.cc, lh3.googleusercontent.com, etc.) ou escolha a opção 'Vídeo' se for um vídeo do Drive.");
                 }
 
+                // Se duração inválida/vazia, salva null (modo manual)
+                if (isNaN(duracao) || duracao <= 0) duracao = null;
+
                 try {
                     await window.addDoc(window.collection(window.db, "apresentacao"), {
                         url: url,
                         tipo: tipo,
+                        duracao: duracao,
                         timestamp: new Date()
                     });
                     document.getElementById('form-add-midia').reset();
+                    document.getElementById('grupo-duracao').style.display = 'none';
                 } catch (error) {
                     console.error("Erro ao adicionar mídia:", error);
                     alert("Erro ao salvar na nuvem.");
@@ -2056,6 +2172,7 @@
 
             document.getElementById('btn-close-player').addEventListener('click', pararPlayer);
             document.getElementById('btn-next-player').addEventListener('click', proximaMidia);
+            document.getElementById('btn-prev-player').addEventListener('click', midiaAnterior);
 
             escutarMidias();
         }
@@ -2087,16 +2204,20 @@
                 if (m.tipo === 'video') {
                     const videoId = m.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
                     const embedUrl = videoId ? `https://drive.google.com/file/d/${videoId[1]}/preview` : m.url;
-                    // O preview pode ficar preto se o vídeo não estiver público (Qualquer pessoa com o link)
                     previewHtml = `<iframe src="${embedUrl}" class="media-preview" allow="autoplay" style="pointer-events: none;"></iframe>`;
                 } else {
                     previewHtml = `<img src="${m.url}" class="media-preview" alt="Imagem">`;
                 }
 
+                const duracaoTexto = (m.tipo === 'video')
+                    ? (m.duracao ? `⏱️ ${m.duracao}s` : '🖐️ Manual')
+                    : '5s';
+
                 card.innerHTML = `
                     ${previewHtml}
                     <div class="media-info">
                         <span>${m.tipo === 'video' ? 'Vídeo' : 'Imagem'}</span>
+                        <span style="font-size:0.75rem; color:#666;">${duracaoTexto}</span>
                         ${isAdmin ? `<button class="btn-delete-media" onclick="deletarMidia('${m.id}')">🗑️</button>` : ''}
                     </div>
                 `;
@@ -2141,8 +2262,6 @@
             if (midia.tipo === 'video') {
                 const videoId = midia.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 if (videoId) {
-                    // REMOVIDO ?autoplay=1 para evitar bloqueio de autoplay do navegador.
-                    // O usuário pode clicar no botão "Próximo ▶" quando o vídeo terminar.
                     const iframe = document.createElement('iframe');
                     iframe.src = `https://drive.google.com/file/d/${videoId[1]}/preview`;
                     iframe.width = "100%";
@@ -2150,9 +2269,14 @@
                     iframe.allow = "autoplay";
                     iframe.style.border = "none";
                     content.appendChild(iframe);
-                    
-                    // Timeout longo de segurança (10 min) caso o operador esqueça de clicar em "Próximo"
-                    midiaTimeout = setTimeout(proximaMidia, 600000); 
+
+                    // Se duração cadastrada, avança sozinho
+                    if (midia.duracao && midia.duracao > 0) {
+                        midiaTimeout = setTimeout(proximaMidia, midia.duracao * 1000);
+                    } else {
+                        // Modo manual: aguarda o operador clicar "Próximo ▶"
+                        midiaTimeout = null;
+                    }
                 } else {
                     proximaMidia();
                 }
@@ -2173,7 +2297,17 @@
             if (midiaTimeout) clearTimeout(midiaTimeout);
             midiaAtualIndex++;
             if (midiaAtualIndex >= dbMidia.length) {
-                midiaAtualIndex = 0;
+                midiaAtualIndex = 0; // loop infinito
+            }
+            reproduzirMidiaAtual();
+        }
+
+        function midiaAnterior() {
+            if (!isPlaying) return;
+            if (midiaTimeout) clearTimeout(midiaTimeout);
+            midiaAtualIndex--;
+            if (midiaAtualIndex < 0) {
+                midiaAtualIndex = dbMidia.length - 1; // loop infinito
             }
             reproduzirMidiaAtual();
         }
