@@ -227,6 +227,26 @@
         }
         .player-controls button:hover { background: rgba(255,192,0,0.9); color: var(--primary); }
 
+        /* CSS extra para os chips de lançamento rápido */
+        .recent-chips-container {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;
+            padding: 10px; background-color: #f8f9fa; border-radius: 5px; border: 1px dashed #ccc;
+        }
+        .recent-chip {
+            background: #fff; border: 1px solid var(--primary); color: var(--primary);
+            padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; cursor: pointer;
+            display: flex; align-items: center; gap: 5px; transition: all 0.2s;
+        }
+        .recent-chip:hover { background: var(--primary); color: white; }
+        .recent-chip-close {
+            background: #ffcccc; color: #d32f2f; border: none; border-radius: 50%;
+            width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
+            font-size: 10px; cursor: pointer; margin-left: 5px;
+        }
+        .recent-chip-close:hover { background: #d32f2f; color: white; }
+        .scroll-table { max-height: 400px; overflow-y: auto; }
+        .scroll-table th { position: sticky; top: 0; z-index: 1; }
+
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .menu-toggle { display: block; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
@@ -364,6 +384,28 @@
                         <div class="meta-input-group"><label>Meta Diária:</label><input type="number" id="meta-diaria-input" value="4000"></div>
                     </div>
                     <div class="chart-wrapper"><div class="chart-container"><canvas id="graficoProducao"></canvas></div></div>
+                    
+                    <!-- NOVA TABELA DE LANÇAMENTOS DO MÊS -->
+                    <div class="table-wrapper">
+                        <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 15px;">Lançamentos do Mês</h3>
+                        <div class="scroll-table">
+                            <table id="tabela-producao-mes">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Trecho</th>
+                                        <th>Local</th>
+                                        <th>Estaca Destino</th>
+                                        <th>Aplicação</th>
+                                        <th>Carradas</th>
+                                        <th>Volume (m³)</th>
+                                        <th style="text-align: center;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="content-controle-eh" style="display: none;">
@@ -565,8 +607,15 @@
     <div class="modal" id="lancamento-modal">
         <div class="modal-content">
             <span class="modal-close" id="close-lancamento">&times;</span>
-            <h3 style="color: var(--primary); margin-bottom: 20px;">Lançar Produção</h3>
+            <h3 style="color: var(--primary); margin-bottom: 20px;" id="lanc-modal-title">Lançar Produção</h3>
+            
+            <!-- Chips de Lançamentos Recentes -->
+            <div id="recent-chips-container" class="recent-chips-container" style="display: none;">
+                <!-- Renderizado via JS -->
+            </div>
+
             <form id="form-lancamento">
+                <input type="hidden" id="lanc-id" value="">
                 <div class="form-row">
                     <div class="form-group"><label>Data *</label><input type="date" class="form-control" id="lanc-date" required></div>
                     <div class="form-group"><label>Apontador</label><input type="text" class="form-control" id="lanc-apontador"></div>
@@ -633,7 +682,7 @@
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                     <button type="button" class="btn btn-outline" id="btn-cancel-lanc">Cancelar</button>
-                    <button type="submit" class="btn btn-accent">Salvar Lançamento</button>
+                    <button type="submit" class="btn btn-accent" id="btn-submit-lanc">Salvar Lançamento</button>
                 </div>
             </form>
         </div>
@@ -1336,15 +1385,17 @@
         let ehMesAtual = new Date();
         let unsubscribeProducao = null;
         let unsubscribeControleEH = null;
+        
+        // Variáveis para Lançamentos Rápidos
+        let recentLancamentos = [];
+        let editandoIdLancamento = null;
 
         // Função para calcular o trecho baseado nas estacas (equivalente à fórmula Excel corrigida)
         function calcularTrecho(estacaString) {
             if (!estacaString) return '';
-            // Limpa a string para extrair os números (remove espaços, hífens, etc)
             const partes = estacaString.split('-').map(p => parseInt(p.trim(), 10));
             if (partes.length < 2 || isNaN(partes[0]) || isNaN(partes[1])) return 'Fora dos trechos';
             
-            // Pega o menor e o maior valor para evitar erro se a estaca estiver invertida (ex: 1988 - 1978)
             const estacaIni = Math.min(partes[0], partes[1]);
             const estacaFim = Math.max(partes[0], partes[1]);
 
@@ -1357,7 +1408,90 @@
             return 'Fora dos trechos';
         }
 
+        // Carrega do localStorage
+        function carregarLancamentosRecentes() {
+            const stored = localStorage.getItem('edeconsil_lancamentos_recentes');
+            if (stored) {
+                try { recentLancamentos = JSON.parse(stored); } catch(e) { recentLancamentos = []; }
+            }
+            renderRecentChips();
+        }
+
+        // Salva no localStorage
+        function salvarLancamentosRecentes() {
+            localStorage.setItem('edeconsil_lancamentos_recentes', JSON.stringify(recentLancamentos));
+            renderRecentChips();
+        }
+
+        // Renderiza os chips no modal
+        function renderRecentChips() {
+            const container = document.getElementById('recent-chips-container');
+            if (recentLancamentos.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'flex';
+            container.innerHTML = '';
+            
+            recentLancamentos.forEach((lanc, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'recent-chip';
+                // Texto resumido (ex: Terraplenagem | Solo | 12m³)
+                const texto = `${lanc.servico} | ${lanc.material} | ${lanc.capacidade}m³`;
+                chip.innerHTML = `
+                    <span>${texto}</span>
+                    <button type="button" class="recent-chip-close" onclick="removerLancamentoRecente(${index}, event)">✕</button>
+                `;
+                // Preenche os campos
+                chip.onclick = (e) => {
+                    if(e.target.classList.contains('recent-chip-close')) return;
+                    document.getElementById('lanc-servico').value = lanc.servico;
+                    document.getElementById('lanc-material').value = lanc.material;
+                    document.getElementById('lanc-local').value = lanc.local;
+                    document.getElementById('lanc-local').dispatchEvent(new Event('change')); // Aciona a exibição do campo jazida
+                    
+                    if(lanc.local === 'JAZIDA') {
+                        document.getElementById('lanc-jazida').value = lanc.jazidaNome || '';
+                    } else {
+                        document.getElementById('lanc-estaca-origem').value = lanc.estacaOrigem || '';
+                    }
+                    document.getElementById('lanc-cb').value = lanc.cb || '';
+                    document.getElementById('lanc-eh').value = lanc.eh || '';
+                    document.getElementById('lanc-capacidade').value = lanc.capacidade || '';
+                    
+                    // Foca no primeiro campo que ele provavelmente quer mudar (estaca final)
+                    document.getElementById('lanc-estaca-final').focus();
+                };
+                container.appendChild(chip);
+            });
+        }
+
+        window.removerLancamentoRecente = function(index, event) {
+            event.stopPropagation();
+            recentLancamentos.splice(index, 1);
+            salvarLancamentosRecentes();
+        };
+
+        // Adiciona ao histórico se ainda não existir algo igual
+        function adicionarLancamentoRecente(dados) {
+            const isIgual = recentLancamentos.some(l => 
+                l.servico === dados.servico && 
+                l.material === dados.material && 
+                l.local === dados.local && 
+                l.capacidade === dados.capacidade &&
+                (l.local === 'JAZIDA' ? l.jazidaNome === dados.jazidaNome : l.estacaOrigem === dados.estacaOrigem)
+            );
+            
+            if (!isIgual) {
+                recentLancamentos.unshift(dados); // Adiciona no início
+                if (recentLancamentos.length > 5) recentLancamentos.pop(); // Mantém só os 5 mais recentes
+                salvarLancamentosRecentes();
+            }
+        }
+
         function initProducao() {
+            carregarLancamentosRecentes(); // Carrega chips salvos
+
             document.getElementById('btn-tab-producao').addEventListener('click', () => {
                 document.getElementById('btn-tab-producao').classList.add('active');
                 document.getElementById('btn-tab-controle-eh').classList.remove('active');
@@ -1394,8 +1528,15 @@
                 const hoje = new Date();
                 let dataDefault = `${anoSelecionadoProducao}-${String(mesSelecionadoProducao + 1).padStart(2, '0')}-01`;
                 if (hoje.getMonth() === mesSelecionadoProducao && hoje.getFullYear() === anoSelecionadoProducao) { dataDefault = hoje.toISOString().split('T')[0]; }
+                
+                // Reseta modo edição
+                editandoIdLancamento = null;
+                document.getElementById('lanc-modal-title').innerText = 'Lançar Produção';
+                document.getElementById('btn-submit-lanc').innerText = 'Salvar Lançamento';
+
                 document.getElementById('lanc-date').value = dataDefault;
                 document.getElementById('form-lancamento').reset();
+                document.getElementById('lanc-id').value = '';
                 document.getElementById('grupo-jazida').style.display = 'none';
                 document.getElementById('lanc-estaca-origem').disabled = false;
                 document.getElementById('lanc-trecho').value = '';
@@ -1430,9 +1571,28 @@
                 lancamento.volume = lancamento.carradas * lancamento.capacidade;
                 
                 try {
-                    await window.addDoc(window.collection(window.db, "producao"), lancamento);
-                    document.getElementById('form-lancamento').reset(); 
-                    alert('Lançamento salvo na nuvem!');
+                    if (editandoIdLancamento) {
+                        // Editando
+                        await window.updateDoc(window.doc(window.db, "producao", editandoIdLancamento), lancamento);
+                    } else {
+                        // Novo
+                        lancamento.timestamp = new Date();
+                        await window.addDoc(window.collection(window.db, "producao"), lancamento);
+                        
+                        // Salva no painel rápido (se não for edição)
+                        adicionarLancamentoRecente({
+                            servico: lancamento.servico,
+                            material: lancamento.material,
+                            local: lancamento.local,
+                            jazidaNome: lancamento.jazidaNome,
+                            estacaOrigem: lancamento.estacaOrigem,
+                            cb: lancamento.cb,
+                            eh: lancamento.eh,
+                            capacidade: lancamento.capacidade
+                        });
+                    }
+                    
+                    document.getElementById('lancamento-modal').style.display = 'none';
                 } catch (error) {
                     console.error(error); alert("Erro ao salvar.");
                 }
@@ -1486,6 +1646,54 @@
             escutarControleEH();
             renderBotoesMeses(); 
         }
+
+        // Funções globais para Editar/Excluir Lançamentos da Tabela
+        window.prepararEdicaoLancamento = function(id) {
+            if (!isAdmin) return alert("Apenas administradores podem editar.");
+            const lanc = dbProducao.find(l => l.id === id);
+            if (!lanc) return alert("Lançamento não encontrado.");
+
+            editandoIdLancamento = id;
+            document.getElementById('lanc-modal-title').innerText = 'Editar Produção';
+            document.getElementById('btn-submit-lanc').innerText = 'Salvar Alterações';
+            
+            document.getElementById('lanc-id').value = id;
+            document.getElementById('lanc-date').value = lanc.data;
+            document.getElementById('lanc-apontador').value = lanc.apontador || '';
+            document.getElementById('lanc-servico').value = lanc.servico;
+            document.getElementById('lanc-material').value = lanc.material || 'Solo/Aterro';
+            
+            document.getElementById('lanc-local').value = lanc.local || 'CAIXA DE EMPRÉSTIMO';
+            document.getElementById('lanc-local').dispatchEvent(new Event('change'));
+            
+            if (lanc.local === 'JAZIDA') {
+                document.getElementById('lanc-jazida').value = lanc.jazidaNome || '';
+            } else {
+                document.getElementById('lanc-estaca-origem').value = lanc.estacaOrigem || '';
+            }
+            
+            document.getElementById('lanc-estaca-final').value = lanc.estacaFinal || '';
+            document.getElementById('lanc-trecho').value = lanc.trecho || '';
+            document.getElementById('lanc-cb').value = lanc.cb || '';
+            document.getElementById('lanc-eh').value = lanc.eh || '';
+            document.getElementById('lanc-carradas').value = lanc.carradas || '';
+            document.getElementById('lanc-capacidade').value = lanc.capacidade || '';
+            document.getElementById('lanc-areia').value = lanc.areia || '';
+
+            document.getElementById('lancamento-modal').style.display = 'flex';
+        };
+
+        window.deletarLancamento = async function(id) {
+            if (!isAdmin) return;
+            if (confirm("Tem certeza que deseja EXCLUIR este lançamento? O gráfico e os KPIs serão atualizados.")) {
+                try {
+                    await window.deleteDoc(window.doc(window.db, "producao", id));
+                } catch (error) {
+                    console.error("Erro ao deletar:", error);
+                    alert("Erro ao excluir o lançamento.");
+                }
+            }
+        };
 
         function escutarProducao() {
             if (!window.firebaseReady) { setTimeout(escutarProducao, 500); return; }
@@ -1742,6 +1950,44 @@
             document.getElementById('kpi-produtividade').innerHTML = `${produtividadeMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³/h</span>`;
 
             renderGraficoPrincipal(dadosDiarios);
+            renderTabelaProducaoMes(dadosMes);
+        }
+
+        // Nova função para renderizar a tabela de lançamentos
+        function renderTabelaProducaoMes(dadosMes) {
+            const tbody = document.querySelector('#tabela-producao-mes tbody');
+            tbody.innerHTML = '';
+
+            if (dadosMes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Nenhum lançamento neste mês.</td></tr>';
+                return;
+            }
+
+            // Ordena por data descendente
+            const dadosOrdenados = [...dadosMes].sort((a, b) => new Date(b.data) - new Date(a.data));
+
+            dadosOrdenados.forEach(lanc => {
+                const tr = document.createElement('tr');
+                const dataFormatada = lanc.data.split('-').reverse().join('/');
+                let localTexto = lanc.local === 'JAZIDA' ? `Jazida: ${lanc.jazidaNome || 'S/N'}` : (lanc.local || 'Empréstimo');
+                
+                tr.innerHTML = `
+                    <td>${dataFormatada}</td>
+                    <td><strong>${lanc.trecho || '-'}</strong></td>
+                    <td>${localTexto}</td>
+                    <td>${lanc.estacaFinal || '-'}</td>
+                    <td>${lanc.servico || '-'}</td>
+                    <td>${lanc.carradas || 0}</td>
+                    <td>${(lanc.volume || 0).toLocaleString('pt-BR')}</td>
+                    <td style="text-align: center; white-space: nowrap;">
+                        ${isAdmin ? `
+                            <button class="btn btn-sm btn-outline" style="padding: 3px 6px; border-color: #001C54; color: #001C54; display: inline-flex;" onclick="prepararEdicaoLancamento('${lanc.id}')" title="Editar">✏️</button>
+                            <button class="btn btn-sm btn-outline" style="padding: 3px 6px; border-color: #d32f2f; color: #d32f2f; display: inline-flex;" onclick="deletarLancamento('${lanc.id}')" title="Excluir">🗑️</button>
+                        ` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         function renderGraficoPrincipal(dadosDiarios) {
@@ -1751,6 +1997,38 @@
                 const prod = d.horas > 0 ? (d.total / d.horas).toFixed(0) : '0';
                 return [`${d.dia}`, `${prod} m³/h`];
             });
+
+            // Plugin para desenhar a linha verde da meta
+            const metaLinePlugin = {
+                id: 'metaLine',
+                afterDraw: (chart) => {
+                    const ctx = chart.ctx;
+                    const yAxis = chart.scales.y;
+                    const xAxis = chart.scales.x;
+                    
+                    // Converte o valor da meta para pixel Y
+                    const yPixel = yAxis.getPixelForValue(metaDiaria);
+                    
+                    if (yPixel >= yAxis.top && yPixel <= yAxis.bottom) {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.setLineDash([6, 6]); // Tracejado
+                        ctx.moveTo(xAxis.left, yPixel);
+                        ctx.lineTo(xAxis.right, yPixel);
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = '#4CAF50'; // Verde
+                        ctx.stroke();
+                        
+                        // Texto da meta
+                        ctx.fillStyle = '#4CAF50';
+                        ctx.font = 'bold 10px Arial';
+                        ctx.textAlign = 'right';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(`Meta: ${metaDiaria} m³`, xAxis.right - 5, yPixel - 5);
+                        ctx.restore();
+                    }
+                }
+            };
 
             graficoPrincipalInstance = new Chart(ctx, {
                 type: 'bar',
@@ -1779,7 +2057,7 @@
                     },
                     plugins: { legend: { position: 'bottom' } }
                 },
-                plugins: [{
+                plugins: [metaLinePlugin, {
                     id: 'customLabels', afterDatasetsDraw: (chart) => {
                         const ctx = chart.ctx;
                         chart.data.datasets.forEach((dataset, i) => {
