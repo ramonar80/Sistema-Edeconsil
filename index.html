@@ -506,32 +506,53 @@
                         </div>
                     </div>
                     <div class="kpi-container" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-                        <div class="kpi-dark-card"><h4>Estoque total</h4><div class="value"><span id="kpi-agr-estoque">0</span> <span class="unit">t</span></div><div class="subtext">Saldo consolidado</div></div>
-                        <div class="kpi-dark-card"><h4>Entradas do mês</h4><div class="value"><span id="kpi-agr-entradas">0</span> <span class="unit">t</span></div><div class="subtext">Recebimento acumulado</div></div>
-                        <div class="kpi-dark-card"><h4>Saídas do mês</h4><div class="value"><span id="kpi-agr-saidas">0</span> <span class="unit">t</span></div><div class="subtext">Todos os destinos</div></div>
-                        <div class="kpi-dark-card"><h4>Conciliação física</h4><div class="value"><span id="kpi-agr-conciliacao">0</span> <span class="unit">%</span></div><div class="subtext">Estoque físico × sistema</div></div>
-                    </div>
+    <div class="kpi-dark-card"><h4>Estoque Total Brita 1</h4><div class="value"><span id="kpi-agr-brita1">0</span> <span class="unit">t</span></div><div class="subtext">Acumulado geral</div></div>
+    <div class="kpi-dark-card"><h4>Estoque Total Brita 0</h4><div class="value"><span id="kpi-agr-brita0">0</span> <span class="unit">t</span></div><div class="subtext">Acumulado geral</div></div>
+    <div class="kpi-dark-card"><h4>Entradas do Período</h4><div class="value"><span id="kpi-agr-entradas">0</span> <span class="unit">t</span></div><div class="subtext" id="subtext-entradas">Recebimento acumulado</div></div>
+    <div class="kpi-dark-card"><h4>Saídas do Período</h4><div class="value"><span id="kpi-agr-saidas">0</span> <span class="unit">t</span></div><div class="subtext" id="subtext-saidas">Todos os destinos</div></div>
+</div>
                     <div class="table-wrapper">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                            <h3 style="font-size: 1rem; color: var(--primary);">Movimentações de Agregados</h3>
-                            <div class="filtros">
-                                <select class="form-control" id="filtro-agr-material" style="width: 150px; padding: 5px;">
-                                    <option value="todos">Todos os Materiais</option>
-                                    <option value="Brita 0">Brita 0</option>
-                                    <option value="Brita 1">Brita 1</option>
-                                    <option value="Pó de Brita">Pó de Brita</option>
-                                    <option value="BGS">BGS</option>
-                                    <option value="Pedra Rachão">Pedra Rachão</option>
-                                </select>
-                                <select class="form-control" id="filtro-agr-tipo" style="width: 150px; padding: 5px;">
-                                    <option value="todos">Entradas e Saídas</option>
-                                    <option value="entrada">Apenas Entradas</option>
-                                    <option value="saida_obra">Saídas para Obra</option>
-                                    <option value="saida_sub">Saídas p/ Subempreiteira</option>
-                                </select>
-                                <input type="text" class="form-control" id="filtro-agr-sub" placeholder="Nome da Subempreiteira" style="width: 180px; padding: 5px;">
-                            </div>
-                        </div>
+    <h3 style="font-size: 1rem; color: var(--primary);">Movimentações de Agregados</h3>
+    <div class="filtros">
+        <select class="form-control" id="filtro-agr-material" style="width: 150px; padding: 5px;">
+            <option value="todos">Todos os Materiais</option>
+            <option value="Brita 0">Brita 0</option>
+            <option value="Brita 1">Brita 1</option>
+            <option value="Pó de Brita">Pó de Brita</option>
+            <option value="BGS">BGS</option>
+            <option value="Pedra Rachão">Pedra Rachão</option>
+        </select>
+        <select class="form-control" id="filtro-agr-tipo" style="width: 150px; padding: 5px;">
+            <option value="todos">Entradas e Saídas</option>
+            <option value="entrada">Apenas Entradas</option>
+            <option value="saida_obra">Saídas para Obra</option>
+            <option value="saida_sub">Saídas p/ Subempreiteira</option>
+        </select>
+        <input type="text" class="form-control" id="filtro-agr-sub" placeholder="Nome da Subempreiteira" style="width: 180px; padding: 5px;">
+        <select class="form-control" id="filtro-agr-ano" style="width: 110px; padding: 5px;">
+            <option value="todos">Ano: Todos</option>
+        </select>
+        <select class="form-control" id="filtro-agr-mes" style="width: 130px; padding: 5px;">
+            <option value="todos">Mês: Todos</option>
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+        </select>
+        <select class="form-control" id="filtro-agr-dia" style="width: 100px; padding: 5px;">
+            <option value="todos">Dia: Todos</option>
+        </select>
+    </div>
+</div>
                         <table id="tabela-agregados">
                             <thead><tr><th>Data</th><th>Tipo</th><th>Material</th><th>Caminhão</th><th>Qtd (Ton)</th><th>Detalhes / Destino</th></tr></thead>
                             <tbody></tbody>
@@ -2102,6 +2123,7 @@
         let dbAgregados = [];
         let filtroMovimentacaoAtual = 'todos';
         let filtroAgrMaterial = 'todos'; let filtroAgrTipo = 'todos'; let filtroAgrSub = '';
+let filtroAgrAno = 'todos'; let filtroAgrMes = 'todos'; let filtroAgrDia = 'todos';
         
         let unsubscribeTanques, unsubscribeMov, unsubscribeAgr;
 
@@ -2236,8 +2258,25 @@
             });
 
             document.getElementById('filtro-agr-material').addEventListener('change', (e) => { filtroAgrMaterial = e.target.value; renderTabelaAgregados(); });
-            document.getElementById('filtro-agr-tipo').addEventListener('change', (e) => { filtroAgrTipo = e.target.value; renderTabelaAgregados(); });
-            document.getElementById('filtro-agr-sub').addEventListener('input', (e) => { filtroAgrSub = e.target.value.toLowerCase(); renderTabelaAgregados(); });
+document.getElementById('filtro-agr-tipo').addEventListener('change', (e) => { filtroAgrTipo = e.target.value; renderTabelaAgregados(); });
+document.getElementById('filtro-agr-sub').addEventListener('input', (e) => { filtroAgrSub = e.target.value.toLowerCase(); renderTabelaAgregados(); });
+document.getElementById('filtro-agr-ano').addEventListener('change', (e) => {
+    filtroAgrAno = e.target.value;
+    filtroAgrDia = 'todos';
+    document.getElementById('filtro-agr-dia').value = 'todos';
+    popularDiasAgregados();
+    renderTabelaAgregados();
+    renderAgregados();
+    });
+document.getElementById('filtro-agr-mes').addEventListener('change', (e) => {
+    filtroAgrMes = e.target.value;
+    filtroAgrDia = 'todos';
+    document.getElementById('filtro-agr-dia').value = 'todos';
+    popularDiasAgregados();
+    renderTabelaAgregados();
+    renderAgregados();
+});
+document.getElementById('filtro-agr-dia').addEventListener('change', (e) => { filtroAgrDia = e.target.value; renderTabelaAgregados(); });
             document.getElementById('btn-relatorio-agregados').addEventListener('click', gerarRelatorioAgregadosPDF);
 
             escutarMateriais();
@@ -2318,49 +2357,150 @@
             });
         }
 
-        function renderAgregados() {
-            const agora = new Date(); const mesAtual = agora.getMonth(); const anoAtual = agora.getFullYear();
-            let totalEntradasTon = 0; let totalSaidasM3 = 0; let entradasMesTon = 0; let saidasMesM3 = 0;
-            dbAgregados.forEach(a => {
-                const [ano, mes] = a.data.split('-').map(Number); const isMesAtual = (mes - 1 === mesAtual && ano === anoAtual);
-                if (a.tipoMov === 'entrada') { totalEntradasTon += (a.qtd || 0); if (isMesAtual) entradasMesTon += (a.qtd || 0); }
-                else { totalSaidasM3 += (a.qtd || 0); if (isMesAtual) saidasMesM3 += (a.qtd || 0); }
-            });
-            const estoqueSistemaTon = totalEntradasTon - totalSaidasM3;
-            document.getElementById('kpi-agr-estoque').textContent = estoqueSistemaTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
-            document.getElementById('kpi-agr-entradas').textContent = entradasMesTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
-            document.getElementById('kpi-agr-saidas').textContent = saidasMesM3.toLocaleString('pt-BR', {maximumFractionDigits:0});
-            ['kpi-agr-estoque', 'kpi-agr-entradas', 'kpi-agr-saidas'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el.nextElementSibling) el.nextElementSibling.textContent = 't';
-            });
-            document.getElementById('kpi-agr-conciliacao').textContent = estoqueSistemaTon < 0 ? 0 : 100;
-            renderTabelaAgregados();
+        // Popula os selects de ano e dia com base nos dados existentes
+function popularFiltrosDataAgregados() {
+    const anosSet = new Set();
+    dbAgregados.forEach(a => {
+        if (a.data) {
+            const [ano] = a.data.split('-');
+            if (ano) anosSet.add(ano);
         }
+    });
+    const selectAno = document.getElementById('filtro-agr-ano');
+    const valorAtualAno = selectAno.value;
+    selectAno.innerHTML = '<option value="todos">Ano: Todos</option>';
+    [...anosSet].sort().forEach(ano => {
+        const opt = document.createElement('option');
+        opt.value = ano; opt.textContent = ano;
+        selectAno.appendChild(opt);
+    });
+    // Restaura seleção se ainda existir
+    if ([...selectAno.options].some(o => o.value === valorAtualAno)) {
+        selectAno.value = valorAtualAno;
+    } else {
+        selectAno.value = 'todos'; filtroAgrAno = 'todos';
+    }
+    popularDiasAgregados();
+}
 
-        function renderTabelaAgregados() {
-            const tbody = document.querySelector('#tabela-agregados tbody'); tbody.innerHTML = '';
-            let filtrados = dbAgregados.filter(a => {
-                if (filtroAgrMaterial !== 'todos' && a.material !== filtroAgrMaterial) return false;
-                if (filtroAgrTipo !== 'todos') {
-                    if (filtroAgrTipo === 'entrada' && a.tipoMov !== 'entrada') return false;
-                    if (filtroAgrTipo === 'saida_obra' && (a.tipoMov !== 'saida' || a.destino !== 'obra')) return false;
-                    if (filtroAgrTipo === 'saida_sub' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira')) return false;
-                }
-                if (filtroAgrSub !== '' && a.tipoMov === 'saida' && a.destino === 'subempreiteira') { if (!a.subempreiteira.toLowerCase().includes(filtroAgrSub)) return false; }
-                else if (filtroAgrSub !== '' && (a.tipoMov === 'entrada' || a.destino !== 'subempreiteira')) { return false; }
-                return true;
-            });
-            filtrados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            filtrados.forEach(a => {
-                const tr = document.createElement('tr'); const dataFormatada = a.data ? a.data.split('-').reverse().join('/') : '-';
-                let detalhes = a.tipoMov === 'entrada' ? `NF: ${a.nota} | Forn: ${a.fornecedor} | Mot: ${a.motorista}` : (a.destino === 'obra' ? `Obra: ${a.servico} (Est. ${a.estacaIni} a ${a.estacaFim})` : `Sub: ${a.subempreiteira} | Dest: ${a.destinoFinal}`);
-                const tipoLabel = a.tipoMov === 'entrada' ? '<span style="color:green; font-weight:bold;">Entrada</span>' : '<span style="color:red; font-weight:bold;">Saída</span>';
-                const unidade = 'Ton';
-                tr.innerHTML = `<td>${dataFormatada}</td><td>${tipoLabel}</td><td>${a.material}</td><td>${a.caminhao}</td><td>${(a.qtd || 0).toFixed(2)} ${unidade}</td><td>${detalhes}</td>`;
-                tbody.appendChild(tr);
-            });
+// Popula o select de dias com base no ano/mês selecionados
+function popularDiasAgregados() {
+    const selectDia = document.getElementById('filtro-agr-dia');
+    const valorAtualDia = selectDia.value;
+    const diasSet = new Set();
+    dbAgregados.forEach(a => {
+        if (!a.data) return;
+        const [ano, mes, dia] = a.data.split('-');
+        if (filtroAgrAno !== 'todos' && ano !== filtroAgrAno) return;
+        if (filtroAgrMes !== 'todos' && parseInt(mes) !== parseInt(filtroAgrMes)) return;
+        diasSet.add(parseInt(dia));
+    });
+    selectDia.innerHTML = '<option value="todos">Dia: Todos</option>';
+    [...diasSet].sort((a,b) => a-b).forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d; opt.textContent = String(d).padStart(2,'0');
+        selectDia.appendChild(opt);
+    });
+    if ([...selectDia.options].some(o => o.value === valorAtualDia)) {
+        selectDia.value = valorAtualDia;
+    } else {
+        selectDia.value = 'todos'; filtroAgrDia = 'todos';
+    }
+}
+
+// Verifica se um registro bate com os filtros de data
+function registroBateFiltroData(a) {
+    if (!a.data) return false;
+    const [ano, mes, dia] = a.data.split('-');
+    if (filtroAgrAno !== 'todos' && ano !== filtroAgrAno) return false;
+    if (filtroAgrMes !== 'todos' && parseInt(mes) !== parseInt(filtroAgrMes)) return false;
+    if (filtroAgrDia !== 'todos' && parseInt(dia) !== parseInt(filtroAgrDia)) return false;
+    return true;
+}
+
+function renderAgregados() {
+    // === KPIs ACUMULADOS DE TODOS OS MESES (Brita 1 e Brita 0) ===
+    let estoqueBrita1 = 0; // entrada - saida (em toneladas)
+    let estoqueBrita0 = 0;
+
+    dbAgregados.forEach(a => {
+        const qtd = a.qtd || 0;
+        if (a.material === 'Brita 1') {
+            estoqueBrita1 += (a.tipoMov === 'entrada') ? qtd : -qtd;
+        } else if (a.material === 'Brita 0') {
+            estoqueBrita0 += (a.tipoMov === 'entrada') ? qtd : -qtd;
         }
+    });
+
+    document.getElementById('kpi-agr-brita1').textContent = estoqueBrita1.toLocaleString('pt-BR', {maximumFractionDigits:0});
+    document.getElementById('kpi-agr-brita0').textContent = estoqueBrita0.toLocaleString('pt-BR', {maximumFractionDigits:0});
+
+    // === KPIs DE ENTRADAS / SAÍDAS DO PERÍODO FILTRADO ===
+    let entradasPeriodoTon = 0;
+    let saidasPeriodoTon = 0;
+
+    dbAgregados.forEach(a => {
+        if (!registroBateFiltroData(a)) return;
+        if (a.tipoMov === 'entrada') entradasPeriodoTon += (a.qtd || 0);
+        else saidasPeriodoTon += (a.qtd || 0);
+    });
+
+    document.getElementById('kpi-agr-entradas').textContent = entradasPeriodoTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
+    document.getElementById('kpi-agr-saidas').textContent = saidasPeriodoTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
+
+    // Atualiza subtextos com o período selecionado
+    const mesesNomes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    let periodoTexto = 'Todo o período';
+    if (filtroAgrAno !== 'todos' || filtroAgrMes !== 'todos' || filtroAgrDia !== 'todos') {
+        const partes = [];
+        if (filtroAgrDia !== 'todos') partes.push(`Dia ${filtroAgrDia}`);
+        if (filtroAgrMes !== 'todos') partes.push(mesesNomes[parseInt(filtroAgrMes)]);
+        if (filtroAgrAno !== 'todos') partes.push(filtroAgrAno);
+        periodoTexto = partes.join(' / ');
+    }
+    document.getElementById('subtext-entradas').textContent = periodoTexto;
+    document.getElementById('subtext-saidas').textContent = periodoTexto;
+
+    // Popula filtros e renderiza tabela
+    popularFiltrosDataAgregados();
+    renderTabelaAgregados();
+}
+
+    function renderTabelaAgregados() {
+    const tbody = document.querySelector('#tabela-agregados tbody');
+    tbody.innerHTML = '';
+    let filtrados = dbAgregados.filter(a => {
+        if (filtroAgrMaterial !== 'todos' && a.material !== filtroAgrMaterial) return false;
+        if (filtroAgrTipo !== 'todos') {
+            if (filtroAgrTipo === 'entrada' && a.tipoMov !== 'entrada') return false;
+            if (filtroAgrTipo === 'saida_obra' && (a.tipoMov !== 'saida' || a.destino !== 'obra')) return false;
+            if (filtroAgrTipo === 'saida_sub' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira')) return false;
+        }
+        if (filtroAgrSub !== '' && a.tipoMov === 'saida' && a.destino === 'subempreiteira') {
+    if (!(a.subempreiteira || '').toLowerCase().includes(filtroAgrSub)) return false;
+        } else if (filtroAgrSub !== '' && (a.tipoMov === 'entrada' || a.destino !== 'subempreiteira')) {
+            return false;
+        }
+        if (!registroBateFiltroData(a)) return false;
+        return true;
+    });
+    filtrados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    filtrados.forEach(a => {
+        const tr = document.createElement('tr');
+        const dataFormatada = a.data ? a.data.split('-').reverse().join('/') : '-';
+        let detalhes = a.tipoMov === 'entrada'
+            ? `NF: ${a.nota} | Forn: ${a.fornecedor} | Mot: ${a.motorista}`
+            : (a.destino === 'obra'
+                ? `Obra: ${a.servico} (Est. ${a.estacaIni} a ${a.estacaFim})`
+                : `Sub: ${a.subempreiteira} | Dest: ${a.destinoFinal}`);
+        const tipoLabel = a.tipoMov === 'entrada'
+            ? '<span style="color:green; font-weight:bold;">Entrada</span>'
+            : '<span style="color:red; font-weight:bold;">Saída</span>';
+        const unidade = 'Ton';
+        tr.innerHTML = `<td>${dataFormatada}</td><td>${tipoLabel}</td><td>${a.material}</td><td>${a.caminhao}</td><td>${(a.qtd || 0).toFixed(2)} ${unidade}</td><td>${detalhes}</td>`;
+        tbody.appendChild(tr);
+    });
+}
 
         function gerarRelatorioPDF() {
             const container = document.createElement('div'); container.style.padding = '20px'; container.style.fontFamily = 'Arial, sans-serif'; container.style.color = '#333'; container.style.backgroundColor = '#fff';
@@ -2376,13 +2516,14 @@
 
         function gerarRelatorioAgregadosPDF() {
             const filtrados = dbAgregados.filter(a => {
-                if (filtroAgrMaterial !== 'todos' && a.material !== filtroAgrMaterial) return false;
-                if (filtroAgrTipo === 'entrada' && a.tipoMov !== 'entrada') return false;
-                if (filtroAgrTipo === 'saida_obra' && (a.tipoMov !== 'saida' || a.destino !== 'obra')) return false;
-                if (filtroAgrTipo === 'saida_sub' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira')) return false;
-                if (filtroAgrSub !== '' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira' || !(a.subempreiteira || '').toLowerCase().includes(filtroAgrSub))) return false;
-                return true;
-            }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    if (filtroAgrMaterial !== 'todos' && a.material !== filtroAgrMaterial) return false;
+    if (filtroAgrTipo === 'entrada' && a.tipoMov !== 'entrada') return false;
+    if (filtroAgrTipo === 'saida_obra' && (a.tipoMov !== 'saida' || a.destino !== 'obra')) return false;
+    if (filtroAgrTipo === 'saida_sub' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira')) return false;
+    if (filtroAgrSub !== '' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira' || !(a.subempreiteira || '').toLowerCase().includes(filtroAgrSub))) return false;
+    if (!registroBateFiltroData(a)) return false;
+    return true;
+}).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             if (filtrados.length === 0) return alert("Não há dados para gerar o relatório com os filtros atuais.");
             const container = document.createElement('div'); container.style.padding = '20px'; container.style.fontFamily = 'Arial, sans-serif'; container.style.color = '#333'; container.style.backgroundColor = '#fff';
             const escapar = valor => String(valor ?? '-').replace(/[&<>"']/g, caractere => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[caractere]));
@@ -2395,7 +2536,7 @@
                 const valores = [a.data ? a.data.split('-').reverse().join('/') : '-', entrada ? 'Entrada' : 'Saída', a.material, quantidadeTon.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), a.caminhao, a.transportador || '-', a.local || '-', destino, a.responsavel || a.motorista || '-'];
                 return `<tr>${valores.map(valor => `<td style="${estiloCelula}">${escapar(valor)}</td>`).join('')}</tr>`;
             }).join('');
-            container.innerHTML = `<div style="text-align: center; margin-bottom: 30px;"><img src="https://i.postimg.cc/dVf8bLHk/logo-Edeconsil.jpg" alt="Edeconsil" crossorigin="anonymous" style="display: block; width: 150px; margin: auto;"><h2 style="color: #FFC000; margin-top: 0; font-size: 16px;">Relatório de Movimentação de Agregados</h2><p style="font-size: 12px;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p><p style="font-size: 12px;"><strong>Filtros aplicados:</strong> Material: ${escapar(filtroAgrMaterial)} | Tipo: ${escapar(filtroAgrTipo)} | Subempreiteira: ${escapar(filtroAgrSub || 'Todas')}</p></div><table style="width: 100%; table-layout: auto; word-wrap: break-word; border-collapse: collapse; margin-bottom: 20px;"><thead><tr style="background-color: #001C54; color: white;">${colunas.map(coluna => `<th style="${estiloCelula}">${coluna}</th>`).join('')}</tr></thead><tbody>${tableHtml}</tbody></table><div style="margin-top: 40px; text-align: center; font-size: 10px; color: #888;">Relatório gerado pelo Sistema Edeconsil.</div>`;
+            container.innerHTML = `<div style="text-align: center; margin-bottom: 30px;"><img src="https://i.postimg.cc/dVf8bLHk/logo-Edeconsil.jpg" alt="Edeconsil" crossorigin="anonymous" style="display: block; width: 150px; margin: auto;"><h2 style="color: #FFC000; margin-top: 0; font-size: 16px;">Relatório de Movimentação de Agregados</h2><p style="font-size: 12px;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p><p style="font-size: 12px;"><strong>Filtros aplicados:</strong> Material: ${escapar(filtroAgrMaterial)} | Tipo: ${escapar(filtroAgrTipo)} | Subempreiteira: ${escapar(filtroAgrSub || 'Todas')} | Período: ${escapar((filtroAgrDia !== 'todos' ? 'Dia ' + filtroAgrDia + ' / ' : '') + (filtroAgrMes !== 'todos' ? 'Mês ' + ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][parseInt(filtroAgrMes)] + ' / ' : '') + (filtroAgrAno !== 'todos' ? 'Ano ' + filtroAgrAno : 'Todos'))}</p></div><table style="width: 100%; table-layout: auto; word-wrap: break-word; border-collapse: collapse; margin-bottom: 20px;"><thead><tr style="background-color: #001C54; color: white;">${colunas.map(coluna => `<th style="${estiloCelula}">${coluna}</th>`).join('')}</tr></thead><tbody>${tableHtml}</tbody></table><div style="margin-top: 40px; text-align: center; font-size: 10px; color: #888;">Relatório gerado pelo Sistema Edeconsil.</div>`;
             html2pdf().set({ margin: 10, filename: `Relatorio_Agregados_${new Date().toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(container).save();
         }
 
