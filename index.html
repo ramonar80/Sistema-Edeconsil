@@ -554,7 +554,17 @@
     </div>
 </div>
                         <table id="tabela-agregados">
-                            <thead><tr><th>Data</th><th>Tipo</th><th>Material</th><th>Caminhão</th><th>Qtd (Ton)</th><th>Detalhes / Destino</th></tr></thead>
+                            <thead>
+    <tr>
+        <th>Data</th>
+        <th>Tipo</th>
+        <th>Material</th>
+        <th>Caminhão</th>
+        <th>Qtd (Ton)</th>
+        <th>Detalhes / Destino</th>
+        <th style="text-align:center;">Ações</th>
+    </tr>
+</thead>
                             <tbody></tbody>
                         </table>
                     </div>
@@ -2232,30 +2242,106 @@ let filtroAgrAno = 'todos'; let filtroAgrMes = 'todos'; let filtroAgrDia = 'todo
 
             document.getElementById('btn-agregado-entrada').addEventListener('click', () => { 
                 if (!isAdmin) return alert("Apenas administradores.");
+                delete document.getElementById('form-agr-entrada').dataset.editId;
                 document.getElementById('form-agr-entrada').reset(); document.getElementById('agr-ent-data').value = new Date().toISOString().split('T')[0]; document.getElementById('modal-agr-entrada').style.display = 'flex'; 
             });
             document.getElementById('btn-agregado-saida').addEventListener('click', () => { 
                 if (!isAdmin) return alert("Apenas administradores.");
+                delete document.getElementById('form-agr-saida').dataset.editId;
                 document.getElementById('form-agr-saida').reset(); document.getElementById('agr-sai-data').value = new Date().toISOString().split('T')[0]; document.getElementById('campos-destino-obra').style.display = 'block'; document.getElementById('campos-destino-sub').style.display = 'none'; document.getElementById('modal-agr-saida').style.display = 'flex'; 
             });
             document.getElementById('agr-sai-destino').addEventListener('change', (e) => { document.getElementById('campos-destino-obra').style.display = (e.target.value === 'obra') ? 'block' : 'none'; document.getElementById('campos-destino-sub').style.display = (e.target.value === 'subempreiteira') ? 'block' : 'none'; });
 
-            document.getElementById('form-agr-entrada').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!isAdmin) return alert("Apenas administradores.");
-                const ent = { tipoMov: 'entrada', data: document.getElementById('agr-ent-data').value, material: document.getElementById('agr-ent-tipo').value, caminhao: document.getElementById('agr-ent-caminhao').value.toUpperCase(), transportador: document.getElementById('agr-ent-transportador').value, local: document.getElementById('agr-ent-local').value, qtd: parseFloat(document.getElementById('agr-ent-qtd').value), valor: parseFloat(document.getElementById('agr-ent-valor').value), nota: document.getElementById('agr-ent-nota').value, fornecedor: document.getElementById('agr-ent-fornecedor').value, motorista: document.getElementById('agr-ent-motorista').value, timestamp: new Date() };
-                await window.addDoc(window.collection(window.db, "agregados"), ent);
-                document.getElementById('modal-agr-entrada').style.display = 'none'; 
-            });
+           document.getElementById('form-agr-entrada').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!isAdmin) return alert("Apenas administradores.");
+    const ent = {
+        tipoMov: 'entrada',
+        data: document.getElementById('agr-ent-data').value,
+        material: document.getElementById('agr-ent-tipo').value,
+        caminhao: document.getElementById('agr-ent-caminhao').value.toUpperCase(),
+        transportador: document.getElementById('agr-ent-transportador').value,
+        local: document.getElementById('agr-ent-local').value,
+        qtd: parseFloat(document.getElementById('agr-ent-qtd').value),
+        valor: parseFloat(document.getElementById('agr-ent-valor').value),
+        nota: document.getElementById('agr-ent-nota').value,
+        fornecedor: document.getElementById('agr-ent-fornecedor').value,
+        motorista: document.getElementById('agr-ent-motorista').value,
+        timestamp: new Date()
+    };
 
-            document.getElementById('form-agr-saida').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!isAdmin) return alert("Apenas administradores.");
-                const carradas = parseFloat(document.getElementById('agr-sai-carradas').value); const capacidade = parseFloat(document.getElementById('agr-sai-capacidade').value); const destino = document.getElementById('agr-sai-destino').value;
-                const sai = { tipoMov: 'saida', data: document.getElementById('agr-sai-data').value, material: document.getElementById('agr-sai-tipo').value, caminhao: document.getElementById('agr-sai-caminhao').value.toUpperCase(), transportador: document.getElementById('agr-sai-transportador').value, local: document.getElementById('agr-sai-local').value, carradas: carradas, qtd: carradas * capacidade, destino: destino, servico: destino === 'obra' ? document.getElementById('agr-sai-servico').value : '-', estacaIni: destino === 'obra' ? document.getElementById('agr-sai-estaca-ini').value : '-', estacaFim: destino === 'obra' ? document.getElementById('agr-sai-estaca-fim').value : '-', subempreiteira: destino === 'subempreiteira' ? document.getElementById('agr-sai-nome-sub').value : '-', destinoFinal: destino === 'subempreiteira' ? document.getElementById('agr-sai-destino-final').value : '-', timestamp: new Date() };
-                await window.addDoc(window.collection(window.db, "agregados"), sai);
-                document.getElementById('modal-agr-saida').style.display = 'none';
-            });
+    try {
+        const editId = e.target.dataset.editId;
+        if (editId) {
+            await window.updateDoc(window.doc(window.db, "agregados", editId), ent);
+            delete e.target.dataset.editId;
+        } else {
+            await window.addDoc(window.collection(window.db, "agregados"), ent);
+        }
+        document.getElementById('modal-agr-entrada').style.display = 'none';
+    } catch (err) {
+        console.error("Erro ao salvar entrada:", err);
+        alert("Erro ao salvar. Tente novamente.");
+    }
+});
+
+           // DENSIDADES (t/m³) — ajuste conforme ensaios do laboratório
+const DENSIDADES_AGREGADOS = {
+    'Brita 0': 1.5,
+    'Brita 1': 1.5,
+    'Pó de Brita': 1.5,
+    'BGS': 1.8,
+    'Pedra Rachão': 1.5
+};
+
+document.getElementById('form-agr-saida').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!isAdmin) return alert("Apenas administradores.");
+
+    const carradas = parseFloat(document.getElementById('agr-sai-carradas').value);
+    const capacidade = parseFloat(document.getElementById('agr-sai-capacidade').value); // m³
+    const destino = document.getElementById('agr-sai-destino').value;
+    const material = document.getElementById('agr-sai-tipo').value;
+    const densidade = DENSIDADES_AGREGADOS[material] || 1.5;
+
+    const volumeM3 = carradas * capacidade;   // m³
+    const qtdTon   = volumeM3 * densidade;    // toneladas ✅
+
+    const sai = {
+        tipoMov: 'saida',
+        data: document.getElementById('agr-sai-data').value,
+        material: material,
+        caminhao: document.getElementById('agr-sai-caminhao').value.toUpperCase(),
+        transportador: document.getElementById('agr-sai-transportador').value,
+        local: document.getElementById('agr-sai-local').value,
+        carradas: carradas,
+        capacidade: capacidade,
+        volumeM3: volumeM3,
+        densidade: densidade,
+        qtd: qtdTon,
+        destino: destino,
+        servico: destino === 'obra' ? document.getElementById('agr-sai-servico').value : '-',
+        estacaIni: destino === 'obra' ? document.getElementById('agr-sai-estaca-ini').value : '-',
+        estacaFim: destino === 'obra' ? document.getElementById('agr-sai-estaca-fim').value : '-',
+        subempreiteira: destino === 'subempreiteira' ? document.getElementById('agr-sai-nome-sub').value : '-',
+        destinoFinal: destino === 'subempreiteira' ? document.getElementById('agr-sai-destino-final').value : '-',
+        timestamp: new Date()
+    };
+
+    try {
+        const editId = e.target.dataset.editId;
+        if (editId) {
+            await window.updateDoc(window.doc(window.db, "agregados", editId), sai);
+            delete e.target.dataset.editId;
+        } else {
+            await window.addDoc(window.collection(window.db, "agregados"), sai);
+        }
+        document.getElementById('modal-agr-saida').style.display = 'none';
+    } catch (err) {
+        console.error("Erro ao salvar saída de agregado:", err);
+        alert("Erro ao salvar. Tente novamente.");
+    }
+});
 
             document.getElementById('filtro-agr-material').addEventListener('change', (e) => { filtroAgrMaterial = e.target.value; renderTabelaAgregados(); });
 document.getElementById('filtro-agr-tipo').addEventListener('change', (e) => { filtroAgrTipo = e.target.value; renderTabelaAgregados(); });
@@ -2497,11 +2583,75 @@ function renderAgregados() {
             ? '<span style="color:green; font-weight:bold;">Entrada</span>'
             : '<span style="color:red; font-weight:bold;">Saída</span>';
         const unidade = 'Ton';
-        tr.innerHTML = `<td>${dataFormatada}</td><td>${tipoLabel}</td><td>${a.material}</td><td>${a.caminhao}</td><td>${(a.qtd || 0).toFixed(2)} ${unidade}</td><td>${detalhes}</td>`;
+        const acoes = isAdmin ? `
+  <td style="text-align:center; white-space:nowrap;">
+    <button class="btn btn-sm btn-outline" style="padding:3px 6px; border-color:#001C54; color:#001C54; display:inline-flex;" onclick="editarAgregado('${a.id}')" title="Editar">✏️</button>
+    <button class="btn btn-sm btn-outline" style="padding:3px 6px; border-color:#d32f2f; color:#d32f2f; display:inline-flex;" onclick="deletarAgregado('${a.id}')" title="Excluir">🗑️</button>
+  </td>` : '<td>-</td>';
+
+tr.innerHTML = `
+  <td>${dataFormatada}</td>
+  <td>${tipoLabel}</td>
+  <td>${a.material}</td>
+  <td>${a.caminhao}</td>
+  <td>${(a.qtd || 0).toFixed(2)} ${unidade}</td>
+  <td>${detalhes}</td>
+  ${acoes}
+`;
         tbody.appendChild(tr);
     });
 }
+window.deletarAgregado = async function(id) {
+    if (!isAdmin) return;
+    if (!confirm("Tem certeza que deseja EXCLUIR este lançamento? Os KPIs serão recalculados.")) return;
+    try {
+        await window.deleteDoc(window.doc(window.db, "agregados", id));
+    } catch (error) {
+        console.error("Erro ao excluir agregado:", error);
+        alert("Erro ao excluir.");
+    }
+};
 
+window.editarAgregado = function(id) {
+    if (!isAdmin) return;
+    const a = dbAgregados.find(x => x.id === id);
+    if (!a) return alert("Lançamento não encontrado.");
+
+    if (a.tipoMov === 'entrada') {
+        document.getElementById('agr-ent-data').value = a.data || '';
+        document.getElementById('agr-ent-tipo').value = a.material || 'Brita 1';
+        document.getElementById('agr-ent-caminhao').value = a.caminhao || '';
+        document.getElementById('agr-ent-qtd').value = a.qtd || '';
+        document.getElementById('agr-ent-valor').value = a.valor || '';
+        document.getElementById('agr-ent-nota').value = a.nota || '';
+        document.getElementById('agr-ent-fornecedor').value = a.fornecedor || '';
+        document.getElementById('agr-ent-motorista').value = a.motorista || '';
+        document.getElementById('agr-ent-transportador').value = a.transportador || '';
+        document.getElementById('agr-ent-local').value = a.local || '';
+        document.getElementById('form-agr-entrada').dataset.editId = id;
+        document.getElementById('modal-agr-entrada').style.display = 'flex';
+    } else {
+        document.getElementById('agr-sai-data').value = a.data || '';
+        document.getElementById('agr-sai-tipo').value = a.material || 'Brita 1';
+        document.getElementById('agr-sai-caminhao').value = a.caminhao || '';
+        document.getElementById('agr-sai-carradas').value = a.carradas || '';
+        document.getElementById('agr-sai-capacidade').value = a.capacidade || 12;
+        document.getElementById('agr-sai-transportador').value = a.transportador || '';
+        document.getElementById('agr-sai-local').value = a.local || '';
+        document.getElementById('agr-sai-destino').value = a.destino || 'obra';
+        document.getElementById('agr-sai-destino').dispatchEvent(new Event('change'));
+        if (a.destino === 'obra') {
+            document.getElementById('agr-sai-servico').value = a.servico || '';
+            document.getElementById('agr-sai-estaca-ini').value = a.estacaIni || '';
+            document.getElementById('agr-sai-estaca-fim').value = a.estacaFim || '';
+        } else {
+            document.getElementById('agr-sai-nome-sub').value = a.subempreiteira || '';
+            document.getElementById('agr-sai-destino-final').value = a.destinoFinal || '';
+        }
+        document.getElementById('form-agr-saida').dataset.editId = id;
+        document.getElementById('modal-agr-saida').style.display = 'flex';
+    }
+};
         function gerarRelatorioPDF() {
             const container = document.createElement('div'); container.style.padding = '20px'; container.style.fontFamily = 'Arial, sans-serif'; container.style.color = '#333'; container.style.backgroundColor = '#fff';
             let totalRR2C = 0; let totalEIA = 0; let tanquesHtml = '';
@@ -2532,7 +2682,7 @@ function renderAgregados() {
             const tableHtml = filtrados.map(a => {
                 const entrada = a.tipoMov === 'entrada';
                 const destino = entrada ? `NF: ${a.nota || '-'} | Forn: ${a.fornecedor || '-'}` : (a.destino === 'obra' ? `Obra: ${a.servico || '-'} (Est. ${a.estacaIni || '-'} a ${a.estacaFim || '-'})` : `Sub: ${a.subempreiteira || '-'} | Dest: ${a.destinoFinal || '-'}`);
-                const quantidadeTon = entrada ? a.qtd : a.qtd / 0.65;
+                const quantidadeTon = a.qtd || 0;
                 const valores = [a.data ? a.data.split('-').reverse().join('/') : '-', entrada ? 'Entrada' : 'Saída', a.material, quantidadeTon.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), a.caminhao, a.transportador || '-', a.local || '-', destino, a.responsavel || a.motorista || '-'];
                 return `<tr>${valores.map(valor => `<td style="${estiloCelula}">${escapar(valor)}</td>`).join('')}</tr>`;
             }).join('');
