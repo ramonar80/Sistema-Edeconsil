@@ -1962,7 +1962,7 @@ metaInput.addEventListener('change', (e) => {
             });
         }
 
-        function renderBotoesMeses() {
+           function renderBotoesMeses() {
             const container = document.getElementById('month-selector'); container.innerHTML = '';
             const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
             meses.forEach((mes, index) => {
@@ -1970,12 +1970,14 @@ metaInput.addEventListener('change', (e) => {
                 btn.className = `month-btn ${index === mesSelecionadoProducao ? 'active' : ''}`;
                 btn.textContent = mes;
                 btn.onclick = () => { 
-    mesSelecionadoProducao = index; 
-    renderBotoesMeses(); 
-    document.getElementById('meta-diaria-input').value = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
-    renderDashboardProducao(); 
-};
-     }
+                    mesSelecionadoProducao = index; 
+                    renderBotoesMeses(); 
+                    document.getElementById('meta-diaria-input').value = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
+                    renderDashboardProducao(); 
+                };
+                container.appendChild(btn);
+            });
+        }
        function renderDashboardProducao() {
     const metaAtual = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
 
