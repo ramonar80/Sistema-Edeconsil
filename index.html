@@ -381,10 +381,15 @@
                     </div>
                     <div class="chart-controls">
                         <div class="month-selector" id="month-selector"></div>
-                        <div class="meta-input-group"><label>Meta Diária:</label><input type="number" id="meta-diaria-input" value="4000"></div>
+                        <div class="meta-input-group"><label>Meta do Mês:</label><input type="number" id="meta-diaria-input" value="4000"></div>
                     </div>
                     <div class="chart-wrapper"><div class="chart-container"><canvas id="graficoProducao"></canvas></div></div>
-                    
+                    <div class="chart-wrapper" style="margin-top: 20px; padding-bottom: 10px;">
+    <h3 style="margin-bottom: 10px; color: var(--primary); font-size: 1rem;">Lançamento de material por trecho</h3>
+    <div class="chart-container" style="min-width: auto; height: 250px; width: 100%;">
+        <canvas id="graficoFunil"></canvas>
+    </div>
+</div>
                     <!-- NOVA TABELA DE LANÇAMENTOS DO MÊS -->
                     <div class="table-wrapper">
                         <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 15px;">Lançamentos do Mês</h3>
@@ -1407,8 +1412,39 @@
         // =========================================
         let dbProducao = [];
         let dbControleEH = [];
-        let metaDiaria = parseInt(localStorage.getItem('edeconsil_meta')) || 4000;
-        let graficoPrincipalInstance = null;
+        // --- SUBSTITUA A LINHA "let metaDiaria = ..." POR ESTE BLOCO ---
+const metasMensais = JSON.parse(localStorage.getItem('edeconsil_metas_mensais')) || {};
+function getMetaMes(mes, ano) {
+    const chave = `${ano}-${mes}`;
+    if (metasMensais[chave] === undefined) {
+        metasMensais[chave] = 4000; // Padrão
+    }
+    return metasMensais[chave];
+}
+function setMetaMes(mes, ano, valor) {
+    const chave = `${ano}-${mes}`;
+    metasMensais[chave] = valor;
+    localStorage.setItem('edeconsil_metas_mensais', JSON.stringify(metasMensais));
+    renderDashboardProducao();
+}
+
+const QUANTIDADES_PROJETO = {
+    'TER01': 140185.864,
+    'TER02': 94987.139,
+    'TER03': 110306.261,
+    'TER04': 174875.454,
+    'TER05': 107693.89
+};
+const CORES_TER = {
+    'TER01': '#1f497d',
+    'TER02': '#ffc000',
+    'TER03': '#595959',
+    'TER04': '#FF0000',
+    'TER05': '#006600'
+};
+let funilChartInstance = null;
+let graficoPrincipalInstance = null;
+// ---------------------------------------------------------------
         let mesSelecionadoProducao = new Date().getMonth();
         let anoSelecionadoProducao = new Date().getFullYear();
         
@@ -1537,9 +1573,13 @@
                 renderPainelEH();
             });
 
-            const metaInput = document.getElementById('meta-diaria-input');
-            metaInput.value = metaDiaria;
-            metaInput.addEventListener('change', (e) => { metaDiaria = parseFloat(e.target.value) || 0; localStorage.setItem('edeconsil_meta', metaDiaria); renderDashboardProducao(); });
+           // --- SUBSTITUA O EVENTO DO metaInput POR ESTE ---
+const metaInput = document.getElementById('meta-diaria-input');
+metaInput.value = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
+metaInput.addEventListener('change', (e) => { 
+    const valor = parseFloat(e.target.value) || 0;
+    setMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao, valor);
+});
 
             // EVENTOS DO MODAL DE LANÇAMENTO
             document.getElementById('lanc-local').addEventListener('change', (e) => {
@@ -1577,58 +1617,65 @@
             document.getElementById('close-lancamento').addEventListener('click', () => document.getElementById('lancamento-modal').style.display = 'none');
             document.getElementById('btn-cancel-lanc').addEventListener('click', () => document.getElementById('lancamento-modal').style.display = 'none');
 
-            document.getElementById('form-lancamento').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!isAdmin) return alert("Apenas administradores.");
-                
-                const local = document.getElementById('lanc-local').value;
-                const lancamento = {
-                    data: document.getElementById('lanc-date').value,
-                    apontador: document.getElementById('lanc-apontador').value, 
-                    servico: document.getElementById('lanc-servico').value,
-                    material: document.getElementById('lanc-material').value,
-                    local: local,
-                    jazidaNome: local === 'JAZIDA' ? document.getElementById('lanc-jazida').value : '',
-                    estacaOrigem: local === 'JAZIDA' ? '' : document.getElementById('lanc-estaca-origem').value,
-                    estacaFinal: document.getElementById('lanc-estaca-final').value,
-                    trecho: document.getElementById('lanc-trecho').value,
-                    cb: document.getElementById('lanc-cb').value.toUpperCase(), 
-                    eh: document.getElementById('lanc-eh').value.toUpperCase(),
-                    carradas: parseFloat(document.getElementById('lanc-carradas').value), 
-                    capacidade: parseFloat(document.getElementById('lanc-capacidade').value),
-                    areia: parseFloat(document.getElementById('lanc-areia').value) || 0,
-                    timestamp: new Date()
-                };
-                lancamento.volume = lancamento.carradas * lancamento.capacidade;
-                
-                try {
-                    if (editandoIdLancamento) {
-                        // Editando
-                        await window.updateDoc(window.doc(window.db, "producao", editandoIdLancamento), lancamento);
-                    } else {
-                        // Novo
-                        lancamento.timestamp = new Date();
-                        await window.addDoc(window.collection(window.db, "producao"), lancamento);
-                        
-                        // Salva no painel rápido (se não for edição)
-                        adicionarLancamentoRecente({
-                            servico: lancamento.servico,
-                            material: lancamento.material,
-                            local: lancamento.local,
-                            jazidaNome: lancamento.jazidaNome,
-                            estacaOrigem: lancamento.estacaOrigem,
-                            cb: lancamento.cb,
-                            eh: lancamento.eh,
-                            capacidade: lancamento.capacidade
-                        });
-                    }
-                    
-                    document.getElementById('lancamento-modal').style.display = 'none';
-                } catch (error) {
-                    console.error(error); alert("Erro ao salvar.");
-                }
+           document.getElementById('form-lancamento').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!isAdmin) return alert("Apenas administradores.");
+    
+    const local = document.getElementById('lanc-local').value;
+    const lancamento = {
+        data: document.getElementById('lanc-date').value,
+        apontador: document.getElementById('lanc-apontador').value, 
+        servico: document.getElementById('lanc-servico').value,
+        material: document.getElementById('lanc-material').value,
+        local: local,
+        jazidaNome: local === 'JAZIDA' ? document.getElementById('lanc-jazida').value : '',
+        estacaOrigem: local === 'JAZIDA' ? '' : document.getElementById('lanc-estaca-origem').value,
+        estacaFinal: document.getElementById('lanc-estaca-final').value,
+        trecho: document.getElementById('lanc-trecho').value,
+        cb: document.getElementById('lanc-cb').value.toUpperCase(), 
+        eh: document.getElementById('lanc-eh').value.toUpperCase(),
+        carradas: parseFloat(document.getElementById('lanc-carradas').value), 
+        capacidade: parseFloat(document.getElementById('lanc-capacidade').value),
+        areia: parseFloat(document.getElementById('lanc-areia').value) || 0,
+        timestamp: new Date()
+    };
+    lancamento.volume = lancamento.carradas * lancamento.capacidade;
+    
+    try {
+        if (editandoIdLancamento) {
+            await window.updateDoc(window.doc(window.db, "producao", editandoIdLancamento), lancamento);
+        } else {
+            lancamento.timestamp = new Date();
+            await window.addDoc(window.collection(window.db, "producao"), lancamento);
+            
+            adicionarLancamentoRecente({
+                servico: lancamento.servico,
+                material: lancamento.material,
+                local: lancamento.local,
+                jazidaNome: lancamento.jazidaNome,
+                estacaOrigem: lancamento.estacaOrigem,
+                cb: lancamento.cb,
+                eh: lancamento.eh,
+                capacidade: lancamento.capacidade
             });
+        }
+        
+        // --- MUDANÇA AQUI: Limpa os campos para o próximo lançamento, mas NÃO fecha o modal ---
+        document.getElementById('lanc-estaca-origem').value = '';
+        document.getElementById('lanc-estaca-final').value = '';
+        document.getElementById('lanc-trecho').value = '';
+        document.getElementById('lanc-carradas').value = '';
+        document.getElementById('lanc-areia').value = '';
+        document.getElementById('lanc-estaca-final').focus(); // Foca no próximo campo a ser preenchido
+        
+        editandoIdLancamento = null;
+        document.getElementById('lanc-modal-title').innerText = 'Lançar Produção';
+        document.getElementById('btn-submit-lanc').innerText = 'Salvar Lançamento';
 
+    } catch (error) {
+        console.error(error); alert("Erro ao salvar.");
+    }
+});
             document.getElementById('btn-add-pde').addEventListener('click', () => {
                 if (!isAdmin) return alert("Apenas administradores.");
                 document.getElementById('form-pde').reset();
@@ -1922,67 +1969,72 @@
                 const btn = document.createElement('button');
                 btn.className = `month-btn ${index === mesSelecionadoProducao ? 'active' : ''}`;
                 btn.textContent = mes;
-                btn.onclick = () => { mesSelecionadoProducao = index; renderBotoesMeses(); renderDashboardProducao(); };
-                container.appendChild(btn);
-            });
-        }
+                btn.onclick = () => { 
+    mesSelecionadoProducao = index; 
+    renderBotoesMeses(); 
+    document.getElementById('meta-diaria-input').value = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
+    renderDashboardProducao(); 
+};
+     }
+       function renderDashboardProducao() {
+    const metaAtual = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
 
-        function renderDashboardProducao() {
-            const dadosMes = dbProducao.filter(d => {
-                if(!d.data) return false;
-                const [ano, mes, dia] = d.data.split('-');
-                return parseInt(ano) === anoSelecionadoProducao && parseInt(mes) === (mesSelecionadoProducao + 1);
-            });
-            let producaoMes = 0, areiaMes = 0;
-            dadosMes.forEach(d => { producaoMes += d.volume || 0; areiaMes += d.areia || 0; });
-            let producaoTotal = dbProducao.reduce((acc, curr) => acc + (curr.volume || 0), 0);
+    const dadosMes = dbProducao.filter(d => {
+        if(!d.data) return false;
+        const [ano, mes, dia] = d.data.split('-');
+        return parseInt(ano) === anoSelecionadoProducao && parseInt(mes) === (mesSelecionadoProducao + 1);
+    });
+    let producaoMes = 0, areiaMes = 0;
+    dadosMes.forEach(d => { producaoMes += d.volume || 0; areiaMes += d.areia || 0; });
+    let producaoTotal = dbProducao.reduce((acc, curr) => acc + (curr.volume || 0), 0);
 
-            document.getElementById('kpi-mes').innerHTML = `${producaoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
-            document.getElementById('kpi-total').innerHTML = `${producaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
-            document.getElementById('kpi-areia').innerHTML = `${areiaMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
+    document.getElementById('kpi-mes').innerHTML = `${producaoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
+    document.getElementById('kpi-total').innerHTML = `${producaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
+    document.getElementById('kpi-areia').innerHTML = `${areiaMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
 
-            const diasNoMes = new Date(anoSelecionadoProducao, mesSelecionadoProducao + 1, 0).getDate();
-            const dadosDiarios = [];
-            let totalHorasMes = 0;
+    const diasNoMes = new Date(anoSelecionadoProducao, mesSelecionadoProducao + 1, 0).getDate();
+    const dadosDiarios = [];
+    let totalHorasMes = 0;
 
-            for (let i = 1; i <= diasNoMes; i++) {
-                const dataStr = `${anoSelecionadoProducao}-${String(mesSelecionadoProducao + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                const lancamentosDia = dadosMes.filter(d => d.data === dataStr);
-                let volTerra = 0, volSub = 0, volBase = 0, areiaDia = 0;
-                
-                lancamentosDia.forEach(l => {
-                    if (l.servico === 'Terraplenagem') volTerra += (l.volume || 0);
-                    if (l.servico === 'Sub-base') volSub += (l.volume || 0);
-                    if (l.servico === 'Base') volBase += (l.volume || 0);
-                    areiaDia += (l.areia || 0);
-                });
+    for (let i = 1; i <= diasNoMes; i++) {
+        const dataStr = `${anoSelecionadoProducao}-${String(mesSelecionadoProducao + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const lancamentosDia = dadosMes.filter(d => d.data === dataStr);
+        let volTerra = 0, volSub = 0, volBase = 0, areiaDia = 0;
+        
+        lancamentosDia.forEach(l => {
+            if (l.servico === 'Terraplenagem') volTerra += (l.volume || 0);
+            if (l.servico === 'Sub-base') volSub += (l.volume || 0);
+            if (l.servico === 'Base') volBase += (l.volume || 0);
+            areiaDia += (l.areia || 0);
+        });
 
-                let horasCarregamentoDia = 0;
-                const regEHDia = dbControleEH.filter(r => r.data === dataStr);
-                regEHDia.forEach(r => {
-                    if (r.servicos) {
-                        r.servicos.forEach(s => {
-                            if (s.tipo === 'Carregamento') {
-                                const [hIni, mIni] = s.ini.split(':').map(Number);
-                                const [hFim, mFim] = s.fim.split(':').map(Number);
-                                let diff = (hFim * 60 + mFim) - (hIni * 60 + mIni);
-                                if (diff < 0) diff += 24 * 60;
-                                horasCarregamentoDia += diff / 60;
-                            }
-                        });
+        let horasCarregamentoDia = 0;
+        const regEHDia = dbControleEH.filter(r => r.data === dataStr);
+        regEHDia.forEach(r => {
+            if (r.servicos) {
+                r.servicos.forEach(s => {
+                    if (s.tipo === 'Carregamento') {
+                        const [hIni, mIni] = s.ini.split(':').map(Number);
+                        const [hFim, mFim] = s.fim.split(':').map(Number);
+                        let diff = (hFim * 60 + mFim) - (hIni * 60 + mIni);
+                        if (diff < 0) diff += 24 * 60;
+                        horasCarregamentoDia += diff / 60;
                     }
                 });
-                
-                totalHorasMes += horasCarregamentoDia;
-                dadosDiarios.push({ dia: i, terra: volTerra, sub: volSub, base: volBase, total: volTerra+volSub+volBase, areia: areiaDia, horas: horasCarregamentoDia });
             }
+        });
+        
+        totalHorasMes += horasCarregamentoDia;
+        dadosDiarios.push({ dia: i, terra: volTerra, sub: volSub, base: volBase, total: volTerra+volSub+volBase, areia: areiaDia, horas: horasCarregamentoDia });
+    }
 
-            let produtividadeMes = totalHorasMes > 0 ? (producaoMes / totalHorasMes) : 0;
-            document.getElementById('kpi-produtividade').innerHTML = `${produtividadeMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³/h</span>`;
+    let produtividadeMes = totalHorasMes > 0 ? (producaoMes / totalHorasMes) : 0;
+    document.getElementById('kpi-produtividade').innerHTML = `${produtividadeMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³/h</span>`;
 
-            renderGraficoPrincipal(dadosDiarios);
-            renderTabelaProducaoMes(dadosMes);
-        }
+    renderGraficoPrincipal(dadosDiarios, metaAtual);
+    renderTabelaProducaoMes(dadosMes);
+    renderFunilTER();
+}
 
         // Nova função para renderizar a tabela de lançamentos
         function renderTabelaProducaoMes(dadosMes) {
@@ -2020,8 +2072,108 @@
                 tbody.appendChild(tr);
             });
         }
+function renderFunilTER() {
+    const ctx = document.getElementById('graficoFunil').getContext('2d');
+    if (funilChartInstance) funilChartInstance.destroy();
 
-        function renderGraficoPrincipal(dadosDiarios) {
+    const totaisTer = { 'TER01': 0, 'TER02': 0, 'TER03': 0, 'TER04': 0, 'TER05': 0 };
+    dbProducao.forEach(l => {
+        if (l.trecho && totaisTer[l.trecho] !== undefined) {
+            totaisTer[l.trecho] += (l.volume || 0);
+        }
+    });
+
+    const labels = ['TER01', 'TER02', 'TER03', 'TER04', 'TER05'];
+    const dadosReais = labels.map(l => totaisTer[l]);
+    const maxProjeto = Math.max(...Object.values(QUANTIDADES_PROJETO));
+    const dadosVisual = dadosReais.map((val, i) => Math.max(val, maxProjeto * 0.02));
+
+    funilChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: dadosVisual,
+                backgroundColor: labels.map(l => CORES_TER[l]),
+                borderWidth: 0,
+                barPercentage: 1,
+                categoryPercentage: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 50, bottom: 0, left: 0, right: 0 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const i = context.dataIndex;
+                            const ter = labels[i];
+                            return `Lançado: ${dadosReais[i].toLocaleString('pt-BR')} m³ | Projeto: ${QUANTIDADES_PROJETO[ter].toLocaleString('pt-BR')} m³`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { display: false },
+                y: { display: false, beginAtZero: true, max: maxProjeto * 1.1 }
+            }
+        },
+        plugins: [{
+            id: 'funilLabels',
+            afterDatasetsDraw: (chart) => {
+                const ctx = chart.ctx;
+                chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                    const ter = labels[index];
+                    const real = dadosReais[index];
+                    const meta = QUANTIDADES_PROJETO[ter];
+                    const perc = ((real / meta) * 100).toFixed(1);
+                    
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    
+                    // Topo (Título)
+                    ctx.fillStyle = '#333';
+                    ctx.font = 'bold 13px Arial';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(ter, bar.x, bar.y - 38);
+                    
+                    // Quantidade Lançada
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.fillText(real.toLocaleString('pt-BR', {maximumFractionDigits: 0}), bar.x, bar.y - 20);
+                    
+                    // Subtítulo
+                    ctx.fillStyle = '#666';
+                    ctx.font = '11px Arial';
+                    ctx.fillText('Quantidade de projeto', bar.x, bar.y - 5);
+                    
+                    // Quantidade de Projeto
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.fillText(meta.toLocaleString('pt-BR', {maximumFractionDigits: 0}), bar.x, bar.y + 12);
+                    
+                    // Porcentagem
+                    ctx.font = 'bold 22px Arial';
+                    if (ter === 'TER02') {
+                        ctx.fillStyle = '#333'; // Cor escura para contrastar com o amarelo
+                    } else {
+                        ctx.fillStyle = '#FFFFFF'; // Branco para os demais
+                    }
+                    
+                    let yPos = bar.y + (bar.height / 2) + 8;
+                    if (bar.height < 30) yPos = bar.y + 5; // Se o funil for muito fino, joga o texto pra cima
+                    
+                    ctx.fillText(`${perc}%`, bar.x, yPos);
+                    ctx.restore();
+                });
+            }
+        }]
+    });
+}
+        function renderGraficoPrincipal(dadosDiarios, metaAtual) {
             const ctx = document.getElementById('graficoProducao').getContext('2d');
             if (graficoPrincipalInstance) graficoPrincipalInstance.destroy();
             const labels = dadosDiarios.map(d => {
@@ -2038,7 +2190,7 @@
                     const xAxis = chart.scales.x;
                     
                     // Converte o valor da meta para pixel Y
-                    const yPixel = yAxis.getPixelForValue(metaDiaria);
+                    const yPixel = yAxis.getPixelForValue(metaAtual);
                     
                     if (yPixel >= yAxis.top && yPixel <= yAxis.bottom) {
                         ctx.save();
@@ -2055,7 +2207,7 @@
                         ctx.font = 'bold 10px Arial';
                         ctx.textAlign = 'right';
                         ctx.textBaseline = 'bottom';
-                        ctx.fillText(`Meta: ${metaDiaria} m³`, xAxis.right - 5, yPixel - 5);
+                       ctx.fillText(`Meta: ${metaAtual} m³`, xAxis.right - 5, yPixel - 5);
                         ctx.restore();
                     }
                 }
@@ -2110,7 +2262,7 @@
                                 let topY = Infinity;
                                 metas.forEach(meta => { if (meta.data[index] && meta.data[index].y < topY) topY = meta.data[index].y; });
                                 const x = metas[0].data[index].x;
-                                const isMetaBatida = d.total >= metaDiaria;
+                                const isMetaBatida = d.total >= metaAtual;
                                 if (isMetaBatida) {
                                     ctx.fillStyle = '#4CAF50';
                                     const textWidth = ctx.measureText(d.total.toLocaleString('pt-BR')).width + 10;
