@@ -265,9 +265,90 @@
             .eh-grid { overflow-x: auto; }
             .eh-columns-header { overflow-x: auto; }
         }
+
+        /* =========================================
+           MASCOTE / ALERTAS DO SISTEMA (DR. RICARDO)
+           ========================================= */
+        .mascote-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: none;
+            align-items: flex-end;
+            z-index: 99999;
+            pointer-events: none;
+            animation: slideInMascote 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .mascote-container.saindo { animation: slideOutMascote 0.5s ease-in forwards; }
+
+        .mascote-personagem {
+            width: 130px;
+            height: 190px;
+            background-image: url('dr-ricardo.png');
+            background-size: 1536px 1024px;
+            background-repeat: no-repeat;
+            margin-right: 15px;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+            transition: background-position 0.1s ease;
+        }
+
+        /* POSES DO SPRITE SHEET DO DR. RICARDO */
+        .mascote-personagem.pose-neutra { background-position: -15px -140px; }
+        .mascote-personagem.pose-apontando { background-position: -535px -140px; }
+        .mascote-personagem.pose-comemorando1 { background-position: -1015px -140px; }
+        .mascote-personagem.pose-comemorando2 { background-position: -1195px -140px; }
+        .mascote-personagem.pose-megafone { background-position: -15px -520px; }
+        .mascote-personagem.pose-placa { background-position: -375px -520px; }
+        .mascote-personagem.pose-alerta-dedo { background-position: -555px -520px; }
+        .mascote-personagem.pose-pensando { background-position: -735px -520px; }
+
+        .mascote-balao {
+            background: #FFFFFF;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 15px;
+            border-bottom-left-radius: 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            max-width: 340px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            position: relative;
+            border-left: 6px solid var(--primary);
+            pointer-events: auto;
+            margin-bottom: 40px; 
+            display: none;
+        }
+
+        .mascote-balao::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -20px;
+            border-width: 20px 20px 0 0;
+            border-style: solid;
+            border-color: #FFFFFF transparent transparent transparent;
+        }
+
+        .mascote-nome {
+            display: block;
+            font-size: 0.8rem;
+            color: #001C54;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @keyframes slideInMascote { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOutMascote { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+
+        @media (max-width: 768px) {
+            .mascote-balao { max-width: 220px; font-size: 0.85rem; }
+            .mascote-personagem { transform: scale(0.7); transform-origin: bottom right; margin-right: -10px; }
+        }
     </style>
-</head>
-<body>
+                       <body>
 
     <div class="overlay" id="overlay"></div>
 
@@ -286,8 +367,7 @@
             <li class="menu-item" data-target="page-apresentacao" id="menu-apresentacao"><span>📺</span> Apresentação</li>
         </ul>
     </nav>
-
-    <div class="main-content">
+                            <div class="main-content">
         <header class="topbar">
             <button class="menu-toggle" id="menu-toggle" style="display: none;">☰</button>
             <div style="font-weight: bold; display: none; color: var(--secondary);" id="mobile-title">EDECONSIL</div>
@@ -360,8 +440,7 @@
                     </div>
                 </div>
             </div>
-
-            <!-- TELA 2: PRODUÇÃO E CONTROLE EH -->
+                                 <!-- TELA 2: PRODUÇÃO E CONTROLE EH -->
             <div id="page-producao" class="page-section">
                 <div class="toggle-container">
                     <button class="toggle-btn active" id="btn-tab-producao">PRODUÇÃO</button>
@@ -385,11 +464,11 @@
                     </div>
                     <div class="chart-wrapper"><div class="chart-container"><canvas id="graficoProducao"></canvas></div></div>
                     <div class="chart-wrapper" style="margin-top: 20px; padding-bottom: 10px;">
-    <h3 style="margin-bottom: 10px; color: var(--primary); font-size: 1rem;">Lançamento de material por trecho</h3>
-    <div class="chart-container" style="min-width: auto; height: 250px; width: 100%;">
-        <canvas id="graficoFunil"></canvas>
-    </div>
-</div>
+                        <h3 style="margin-bottom: 10px; color: var(--primary); font-size: 1rem;">Lançamento de material por trecho</h3>
+                        <div class="chart-container" style="min-width: auto; height: 250px; width: 100%;">
+                            <canvas id="graficoFunil"></canvas>
+                        </div>
+                    </div>
                     <!-- NOVA TABELA DE LANÇAMENTOS DO MÊS -->
                     <div class="table-wrapper">
                         <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 15px;">Lançamentos do Mês</h3>
@@ -511,72 +590,71 @@
                         </div>
                     </div>
                     <div class="kpi-container" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-    <div class="kpi-dark-card"><h4>Estoque Total Brita 1</h4><div class="value"><span id="kpi-agr-brita1">0</span> <span class="unit">t</span></div><div class="subtext">Acumulado geral</div></div>
-    <div class="kpi-dark-card"><h4>Estoque Total Brita 0</h4><div class="value"><span id="kpi-agr-brita0">0</span> <span class="unit">t</span></div><div class="subtext">Acumulado geral</div></div>
-    <div class="kpi-dark-card"><h4>Entradas do Período</h4><div class="value"><span id="kpi-agr-entradas">0</span> <span class="unit">t</span></div><div class="subtext" id="subtext-entradas">Recebimento acumulado</div></div>
-    <div class="kpi-dark-card"><h4>Saídas do Período</h4><div class="value"><span id="kpi-agr-saidas">0</span> <span class="unit">t</span></div><div class="subtext" id="subtext-saidas">Todos os destinos</div></div>
-</div>
+                        <div class="kpi-dark-card"><h4>Estoque Total Brita 1</h4><div class="value"><span id="kpi-agr-brita1">0</span> <span class="unit">t</span></div><div class="subtext">Acumulado geral</div></div>
+                        <div class="kpi-dark-card"><h4>Estoque Total Brita 0</h4><div class="value"><span id="kpi-agr-brita0">0</span> <span class="unit">t</span></div><div class="subtext">Acumulado geral</div></div>
+                        <div class="kpi-dark-card"><h4>Entradas do Período</h4><div class="value"><span id="kpi-agr-entradas">0</span> <span class="unit">t</span></div><div class="subtext" id="subtext-entradas">Recebimento acumulado</div></div>
+                        <div class="kpi-dark-card"><h4>Saídas do Período</h4><div class="value"><span id="kpi-agr-saidas">0</span> <span class="unit">t</span></div><div class="subtext" id="subtext-saidas">Todos os destinos</div></div>
+                    </div>
                     <div class="table-wrapper">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-    <h3 style="font-size: 1rem; color: var(--primary);">Movimentações de Agregados</h3>
-    <div class="filtros">
-        <select class="form-control" id="filtro-agr-material" style="width: 150px; padding: 5px;">
-            <option value="todos">Todos os Materiais</option>
-            <option value="Brita 0">Brita 0</option>
-            <option value="Brita 1">Brita 1</option>
-            <option value="Pó de Brita">Pó de Brita</option>
-            <option value="BGS">BGS</option>
-            <option value="Pedra Rachão">Pedra Rachão</option>
-        </select>
-        <select class="form-control" id="filtro-agr-tipo" style="width: 150px; padding: 5px;">
-            <option value="todos">Entradas e Saídas</option>
-            <option value="entrada">Apenas Entradas</option>
-            <option value="saida_obra">Saídas para Obra</option>
-            <option value="saida_sub">Saídas p/ Subempreiteira</option>
-        </select>
-        <input type="text" class="form-control" id="filtro-agr-sub" placeholder="Nome da Subempreiteira" style="width: 180px; padding: 5px;">
-        <select class="form-control" id="filtro-agr-ano" style="width: 110px; padding: 5px;">
-            <option value="todos">Ano: Todos</option>
-        </select>
-        <select class="form-control" id="filtro-agr-mes" style="width: 130px; padding: 5px;">
-            <option value="todos">Mês: Todos</option>
-            <option value="1">Janeiro</option>
-            <option value="2">Fevereiro</option>
-            <option value="3">Março</option>
-            <option value="4">Abril</option>
-            <option value="5">Maio</option>
-            <option value="6">Junho</option>
-            <option value="7">Julho</option>
-            <option value="8">Agosto</option>
-            <option value="9">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
-        </select>
-        <select class="form-control" id="filtro-agr-dia" style="width: 100px; padding: 5px;">
-            <option value="todos">Dia: Todos</option>
-        </select>
-    </div>
-</div>
+                            <h3 style="font-size: 1rem; color: var(--primary);">Movimentações de Agregados</h3>
+                            <div class="filtros">
+                                <select class="form-control" id="filtro-agr-material" style="width: 150px; padding: 5px;">
+                                    <option value="todos">Todos os Materiais</option>
+                                    <option value="Brita 0">Brita 0</option>
+                                    <option value="Brita 1">Brita 1</option>
+                                    <option value="Pó de Brita">Pó de Brita</option>
+                                    <option value="BGS">BGS</option>
+                                    <option value="Pedra Rachão">Pedra Rachão</option>
+                                </select>
+                                <select class="form-control" id="filtro-agr-tipo" style="width: 150px; padding: 5px;">
+                                    <option value="todos">Entradas e Saídas</option>
+                                    <option value="entrada">Apenas Entradas</option>
+                                    <option value="saida_obra">Saídas para Obra</option>
+                                    <option value="saida_sub">Saídas p/ Subempreiteira</option>
+                                </select>
+                                <input type="text" class="form-control" id="filtro-agr-sub" placeholder="Nome da Subempreiteira" style="width: 180px; padding: 5px;">
+                                <select class="form-control" id="filtro-agr-ano" style="width: 110px; padding: 5px;">
+                                    <option value="todos">Ano: Todos</option>
+                                </select>
+                                <select class="form-control" id="filtro-agr-mes" style="width: 130px; padding: 5px;">
+                                    <option value="todos">Mês: Todos</option>
+                                    <option value="1">Janeiro</option>
+                                    <option value="2">Fevereiro</option>
+                                    <option value="3">Março</option>
+                                    <option value="4">Abril</option>
+                                    <option value="5">Maio</option>
+                                    <option value="6">Junho</option>
+                                    <option value="7">Julho</option>
+                                    <option value="8">Agosto</option>
+                                    <option value="9">Setembro</option>
+                                    <option value="10">Outubro</option>
+                                    <option value="11">Novembro</option>
+                                    <option value="12">Dezembro</option>
+                                </select>
+                                <select class="form-control" id="filtro-agr-dia" style="width: 100px; padding: 5px;">
+                                    <option value="todos">Dia: Todos</option>
+                                </select>
+                            </div>
+                        </div>
                         <table id="tabela-agregados">
                             <thead>
-    <tr>
-        <th>Data</th>
-        <th>Tipo</th>
-        <th>Material</th>
-        <th>Caminhão</th>
-        <th>Qtd (Ton)</th>
-        <th>Detalhes / Destino</th>
-        <th style="text-align:center;">Ações</th>
-    </tr>
-</thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Material</th>
+                                    <th>Caminhão</th>
+                                    <th>Qtd (Ton)</th>
+                                    <th>Detalhes / Destino</th>
+                                    <th style="text-align:center;">Ações</th>
+                                </tr>
+                            </thead>
                             <tbody></tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <!-- TELA 4: APRESENTAÇÃO -->
+                        <!-- TELA 4: APRESENTAÇÃO -->
             <div id="page-apresentacao" class="page-section">
                 <div class="page-header">
                     <h2>Apresentação (Mural / Playlist)</h2>
@@ -618,6 +696,15 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- MASCOTE DE ALERTAS (DR. RICARDO) -->
+    <div class="mascote-container" id="mascote-container">
+        <div class="mascote-personagem pose-neutra" id="mascote-img"></div>
+        <div class="mascote-balao" id="mascote-balao">
+            <span class="mascote-nome">Dr. Ricardo</span>
+            <span id="mascote-texto"></span>
         </div>
     </div>
 
@@ -919,9 +1006,11 @@
             </form>
         </div>
     </div>
+        <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/Sistema-Edeconsil/sw.js');
+        }
 
-    <!-- SCRIPT PRINCIPAL -->
-    <script>
         // =========================================
         // VARIÁVEIS GLOBAIS E PERMISSÕES
         // =========================================
@@ -942,7 +1031,6 @@
         let isAdmin = false;
         let isColaboradorDiario = false;
 
-        // Helper de checagem defensiva (extra, além das regras do Firestore)
         function podeEscreverDiario() {
             return isAdmin || isColaboradorDiario;
         }
@@ -1006,11 +1094,9 @@
                     userEmail.style.display = 'block';
                     userEmail.innerText = user.email;
 
-                    // Define permissões conforme o e-mail autenticado
                     isAdmin = admins.includes(user.email);
                     isColaboradorDiario = colaboradoresDiario.includes(user.email);
 
-                    // Esconde todos os itens de criação por padrão
                     document.getElementById('menu-producao').style.display = 'none';
                     document.getElementById('menu-materiais').style.display = 'none';
                     document.getElementById('menu-apresentacao').style.display = 'none';
@@ -1026,7 +1112,6 @@
                     document.getElementById('form-add-midia').style.display = 'none';
 
                     if (isAdmin) {
-                        // ADMIN: libera tudo
                         document.getElementById('menu-producao').style.display = 'flex';
                         document.getElementById('menu-materiais').style.display = 'flex';
                         document.getElementById('menu-apresentacao').style.display = 'flex';
@@ -1041,13 +1126,11 @@
                         document.getElementById('btn-agregado-saida').style.display = 'flex';
                         document.getElementById('form-add-midia').style.display = 'block';
                     } else if (isColaboradorDiario) {
-                        // COLABORADOR DO DIÁRIO: apenas o Diário + botão Novo Registro
                         document.getElementById('btn-new-entry').style.display = 'flex';
                     } else {
                         alert("Você está logado como visualizador. Não pode lançar dados.");
                     }
                 } else {
-                    // Deslogado: sem permissões
                     isAdmin = false;
                     isColaboradorDiario = false;
                     btnLogin.style.display = 'block';
@@ -1072,7 +1155,6 @@
                 if (typeof renderDashboardProducao === 'function') renderDashboardProducao();
             });
 
-            // INICIALIZA MÓDULOS
             initDiario();
             initProducao();
             initMateriais();
@@ -1412,153 +1494,94 @@
         // =========================================
         let dbProducao = [];
         let dbControleEH = [];
-        // --- SUBSTITUA A LINHA "let metaDiaria = ..." POR ESTE BLOCO ---
-const metasMensais = JSON.parse(localStorage.getItem('edeconsil_metas_mensais')) || {};
-function getMetaMes(mes, ano) {
-    const chave = `${ano}-${mes}`;
-    if (metasMensais[chave] === undefined) {
-        metasMensais[chave] = 4000; // Padrão
-    }
-    return metasMensais[chave];
-}
-function setMetaMes(mes, ano, valor) {
-    const chave = `${ano}-${mes}`;
-    metasMensais[chave] = valor;
-    localStorage.setItem('edeconsil_metas_mensais', JSON.stringify(metasMensais));
-    renderDashboardProducao();
-}
+        
+        const metasMensais = JSON.parse(localStorage.getItem('edeconsil_metas_mensais')) || {};
+        function getMetaMes(mes, ano) {
+            const chave = `${ano}-${mes}`;
+            if (metasMensais[chave] === undefined) {
+                metasMensais[chave] = 4000;
+            }
+            return metasMensais[chave];
+        }
+        function setMetaMes(mes, ano, valor) {
+            const chave = `${ano}-${mes}`;
+            metasMensais[chave] = valor;
+            localStorage.setItem('edeconsil_metas_mensais', JSON.stringify(metasMensais));
+            renderDashboardProducao();
+        }
 
-const QUANTIDADES_PROJETO = {
-    'TER01': 140185.864,
-    'TER02': 94987.139,
-    'TER03': 110306.261,
-    'TER04': 174875.454,
-    'TER05': 107693.89
-};
-const CORES_TER = {
-    'TER01': '#1f497d',
-    'TER02': '#ffc000',
-    'TER03': '#595959',
-    'TER04': '#FF0000',
-    'TER05': '#006600'
-};
-let funilChartInstance = null;
-let graficoPrincipalInstance = null;
-// ---------------------------------------------------------------
+        const QUANTIDADES_PROJETO = {
+            'TER01': 140185.864, 'TER02': 94987.139, 'TER03': 110306.261, 'TER04': 174875.454, 'TER05': 107693.89
+        };
+        const CORES_TER = {
+            'TER01': '#1f497d', 'TER02': '#ffc000', 'TER03': '#595959', 'TER04': '#FF0000', 'TER05': '#006600'
+        };
+        let funilChartInstance = null;
+        let graficoPrincipalInstance = null;
+        
         let mesSelecionadoProducao = new Date().getMonth();
         let anoSelecionadoProducao = new Date().getFullYear();
-        
         let ehDataSelecionada = new Date().toISOString().split('T')[0];
         let ehMesAtual = new Date();
         let unsubscribeProducao = null;
         let unsubscribeControleEH = null;
-        
-        // Variáveis para Lançamentos Rápidos
         let recentLancamentos = [];
         let editandoIdLancamento = null;
 
-        // Função para calcular o trecho baseado nas estacas (equivalente à fórmula Excel corrigida)
         function calcularTrecho(estacaString) {
             if (!estacaString) return '';
             const partes = estacaString.split('-').map(p => parseInt(p.trim(), 10));
             if (partes.length < 2 || isNaN(partes[0]) || isNaN(partes[1])) return 'Fora dos trechos';
-            
             const estacaIni = Math.min(partes[0], partes[1]);
             const estacaFim = Math.max(partes[0], partes[1]);
-
             if (estacaIni <= 2150 && estacaFim >= 1986) return 'TER01';
             if (estacaIni <= 1985 && estacaFim >= 1762) return 'TER02';
             if (estacaIni <= 1761 && estacaFim >= 1545) return 'TER03';
             if (estacaIni <= 1544 && estacaFim >= 1300) return 'TER04';
             if (estacaIni <= 1299 && estacaFim >= 1079) return 'TER05';
-            
             return 'Fora dos trechos';
         }
 
-        // Carrega do localStorage
         function carregarLancamentosRecentes() {
             const stored = localStorage.getItem('edeconsil_lancamentos_recentes');
-            if (stored) {
-                try { recentLancamentos = JSON.parse(stored); } catch(e) { recentLancamentos = []; }
-            }
+            if (stored) { try { recentLancamentos = JSON.parse(stored); } catch(e) { recentLancamentos = []; } }
             renderRecentChips();
         }
-
-        // Salva no localStorage
         function salvarLancamentosRecentes() {
             localStorage.setItem('edeconsil_lancamentos_recentes', JSON.stringify(recentLancamentos));
             renderRecentChips();
         }
-
-        // Renderiza os chips no modal
         function renderRecentChips() {
             const container = document.getElementById('recent-chips-container');
-            if (recentLancamentos.length === 0) {
-                container.style.display = 'none';
-                return;
-            }
-            container.style.display = 'flex';
-            container.innerHTML = '';
-            
+            if (recentLancamentos.length === 0) { container.style.display = 'none'; return; }
+            container.style.display = 'flex'; container.innerHTML = '';
             recentLancamentos.forEach((lanc, index) => {
-                const chip = document.createElement('div');
-                chip.className = 'recent-chip';
-                // Texto resumido (ex: Terraplenagem | Solo | 12m³)
+                const chip = document.createElement('div'); chip.className = 'recent-chip';
                 const texto = `${lanc.servico} | ${lanc.material} | ${lanc.capacidade}m³`;
-                chip.innerHTML = `
-                    <span>${texto}</span>
-                    <button type="button" class="recent-chip-close" onclick="removerLancamentoRecente(${index}, event)">✕</button>
-                `;
-                // Preenche os campos
+                chip.innerHTML = `<span>${texto}</span><button type="button" class="recent-chip-close" onclick="removerLancamentoRecente(${index}, event)">✕</button>`;
                 chip.onclick = (e) => {
                     if(e.target.classList.contains('recent-chip-close')) return;
                     document.getElementById('lanc-servico').value = lanc.servico;
                     document.getElementById('lanc-material').value = lanc.material;
                     document.getElementById('lanc-local').value = lanc.local;
-                    document.getElementById('lanc-local').dispatchEvent(new Event('change')); // Aciona a exibição do campo jazida
-                    
-                    if(lanc.local === 'JAZIDA') {
-                        document.getElementById('lanc-jazida').value = lanc.jazidaNome || '';
-                    } else {
-                        document.getElementById('lanc-estaca-origem').value = lanc.estacaOrigem || '';
-                    }
+                    document.getElementById('lanc-local').dispatchEvent(new Event('change'));
+                    if(lanc.local === 'JAZIDA') { document.getElementById('lanc-jazida').value = lanc.jazidaNome || ''; } else { document.getElementById('lanc-estaca-origem').value = lanc.estacaOrigem || ''; }
                     document.getElementById('lanc-cb').value = lanc.cb || '';
                     document.getElementById('lanc-eh').value = lanc.eh || '';
                     document.getElementById('lanc-capacidade').value = lanc.capacidade || '';
-                    
-                    // Foca no primeiro campo que ele provavelmente quer mudar (estaca final)
                     document.getElementById('lanc-estaca-final').focus();
                 };
                 container.appendChild(chip);
             });
         }
-
-        window.removerLancamentoRecente = function(index, event) {
-            event.stopPropagation();
-            recentLancamentos.splice(index, 1);
-            salvarLancamentosRecentes();
-        };
-
-        // Adiciona ao histórico se ainda não existir algo igual
+        window.removerLancamentoRecente = function(index, event) { event.stopPropagation(); recentLancamentos.splice(index, 1); salvarLancamentosRecentes(); };
         function adicionarLancamentoRecente(dados) {
-            const isIgual = recentLancamentos.some(l => 
-                l.servico === dados.servico && 
-                l.material === dados.material && 
-                l.local === dados.local && 
-                l.capacidade === dados.capacidade &&
-                (l.local === 'JAZIDA' ? l.jazidaNome === dados.jazidaNome : l.estacaOrigem === dados.estacaOrigem)
-            );
-            
-            if (!isIgual) {
-                recentLancamentos.unshift(dados); // Adiciona no início
-                if (recentLancamentos.length > 5) recentLancamentos.pop(); // Mantém só os 5 mais recentes
-                salvarLancamentosRecentes();
-            }
+            const isIgual = recentLancamentos.some(l => l.servico === dados.servico && l.material === dados.material && l.local === dados.local && l.capacidade === dados.capacidade && (l.local === 'JAZIDA' ? l.jazidaNome === dados.jazidaNome : l.estacaOrigem === dados.estacaOrigem));
+            if (!isIgual) { recentLancamentos.unshift(dados); if (recentLancamentos.length > 5) recentLancamentos.pop(); salvarLancamentosRecentes(); }
         }
 
         function initProducao() {
-            carregarLancamentosRecentes(); // Carrega chips salvos
-
+            carregarLancamentosRecentes();
             document.getElementById('btn-tab-producao').addEventListener('click', () => {
                 document.getElementById('btn-tab-producao').classList.add('active');
                 document.getElementById('btn-tab-controle-eh').classList.remove('active');
@@ -1573,23 +1596,17 @@ let graficoPrincipalInstance = null;
                 renderPainelEH();
             });
 
-           // --- SUBSTITUA O EVENTO DO metaInput POR ESTE ---
-const metaInput = document.getElementById('meta-diaria-input');
-metaInput.value = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
-metaInput.addEventListener('change', (e) => { 
-    const valor = parseFloat(e.target.value) || 0;
-    setMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao, valor);
-});
+            const metaInput = document.getElementById('meta-diaria-input');
+            metaInput.value = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
+            metaInput.addEventListener('change', (e) => { const valor = parseFloat(e.target.value) || 0; setMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao, valor); });
 
-            // EVENTOS DO MODAL DE LANÇAMENTO
             document.getElementById('lanc-local').addEventListener('change', (e) => {
                 const isJazida = e.target.value === 'JAZIDA';
                 document.getElementById('grupo-jazida').style.display = isJazida ? 'block' : 'none';
                 const campoOrigem = document.getElementById('lanc-estaca-origem');
                 campoOrigem.disabled = isJazida;
-                if (isJazida) campoOrigem.value = ''; // Limpa se desabilitar
+                if (isJazida) campoOrigem.value = '';
             });
-
             document.getElementById('lanc-estaca-final').addEventListener('input', (e) => {
                 document.getElementById('lanc-trecho').value = calcularTrecho(e.target.value);
             });
@@ -1599,12 +1616,9 @@ metaInput.addEventListener('change', (e) => {
                 const hoje = new Date();
                 let dataDefault = `${anoSelecionadoProducao}-${String(mesSelecionadoProducao + 1).padStart(2, '0')}-01`;
                 if (hoje.getMonth() === mesSelecionadoProducao && hoje.getFullYear() === anoSelecionadoProducao) { dataDefault = hoje.toISOString().split('T')[0]; }
-                
-                // Reseta modo edição
                 editandoIdLancamento = null;
                 document.getElementById('lanc-modal-title').innerText = 'Lançar Produção';
                 document.getElementById('btn-submit-lanc').innerText = 'Salvar Lançamento';
-
                 document.getElementById('lanc-date').value = dataDefault;
                 document.getElementById('form-lancamento').reset();
                 document.getElementById('lanc-id').value = '';
@@ -1617,65 +1631,44 @@ metaInput.addEventListener('change', (e) => {
             document.getElementById('close-lancamento').addEventListener('click', () => document.getElementById('lancamento-modal').style.display = 'none');
             document.getElementById('btn-cancel-lanc').addEventListener('click', () => document.getElementById('lancamento-modal').style.display = 'none');
 
-           document.getElementById('form-lancamento').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!isAdmin) return alert("Apenas administradores.");
-    
-    const local = document.getElementById('lanc-local').value;
-    const lancamento = {
-        data: document.getElementById('lanc-date').value,
-        apontador: document.getElementById('lanc-apontador').value, 
-        servico: document.getElementById('lanc-servico').value,
-        material: document.getElementById('lanc-material').value,
-        local: local,
-        jazidaNome: local === 'JAZIDA' ? document.getElementById('lanc-jazida').value : '',
-        estacaOrigem: local === 'JAZIDA' ? '' : document.getElementById('lanc-estaca-origem').value,
-        estacaFinal: document.getElementById('lanc-estaca-final').value,
-        trecho: document.getElementById('lanc-trecho').value,
-        cb: document.getElementById('lanc-cb').value.toUpperCase(), 
-        eh: document.getElementById('lanc-eh').value.toUpperCase(),
-        carradas: parseFloat(document.getElementById('lanc-carradas').value), 
-        capacidade: parseFloat(document.getElementById('lanc-capacidade').value),
-        areia: parseFloat(document.getElementById('lanc-areia').value) || 0,
-        timestamp: new Date()
-    };
-    lancamento.volume = lancamento.carradas * lancamento.capacidade;
-    
-    try {
-        if (editandoIdLancamento) {
-            await window.updateDoc(window.doc(window.db, "producao", editandoIdLancamento), lancamento);
-        } else {
-            lancamento.timestamp = new Date();
-            await window.addDoc(window.collection(window.db, "producao"), lancamento);
-            
-            adicionarLancamentoRecente({
-                servico: lancamento.servico,
-                material: lancamento.material,
-                local: lancamento.local,
-                jazidaNome: lancamento.jazidaNome,
-                estacaOrigem: lancamento.estacaOrigem,
-                cb: lancamento.cb,
-                eh: lancamento.eh,
-                capacidade: lancamento.capacidade
+            document.getElementById('form-lancamento').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
+                const local = document.getElementById('lanc-local').value;
+                const lancamento = {
+                    data: document.getElementById('lanc-date').value,
+                    apontador: document.getElementById('lanc-apontador').value, 
+                    servico: document.getElementById('lanc-servico').value,
+                    material: document.getElementById('lanc-material').value,
+                    local: local,
+                    jazidaNome: local === 'JAZIDA' ? document.getElementById('lanc-jazida').value : '',
+                    estacaOrigem: local === 'JAZIDA' ? '' : document.getElementById('lanc-estaca-origem').value,
+                    estacaFinal: document.getElementById('lanc-estaca-final').value,
+                    trecho: document.getElementById('lanc-trecho').value,
+                    cb: document.getElementById('lanc-cb').value.toUpperCase(), 
+                    eh: document.getElementById('lanc-eh').value.toUpperCase(),
+                    carradas: parseFloat(document.getElementById('lanc-carradas').value), 
+                    capacidade: parseFloat(document.getElementById('lanc-capacidade').value),
+                    areia: parseFloat(document.getElementById('lanc-areia').value) || 0,
+                    timestamp: new Date()
+                };
+                lancamento.volume = lancamento.carradas * lancamento.capacidade;
+                try {
+                    if (editandoIdLancamento) { await window.updateDoc(window.doc(window.db, "producao", editandoIdLancamento), lancamento); } 
+                    else {
+                        lancamento.timestamp = new Date();
+                        await window.addDoc(window.collection(window.db, "producao"), lancamento);
+                        adicionarLancamentoRecente({ servico: lancamento.servico, material: lancamento.material, local: lancamento.local, jazidaNome: lancamento.jazidaNome, estacaOrigem: lancamento.estacaOrigem, cb: lancamento.cb, eh: lancamento.eh, capacidade: lancamento.capacidade });
+                    }
+                    document.getElementById('lanc-estaca-origem').value = ''; document.getElementById('lanc-estaca-final').value = '';
+                    document.getElementById('lanc-trecho').value = ''; document.getElementById('lanc-carradas').value = ''; document.getElementById('lanc-areia').value = '';
+                    document.getElementById('lanc-estaca-final').focus();
+                    editandoIdLancamento = null;
+                    document.getElementById('lanc-modal-title').innerText = 'Lançar Produção';
+                    document.getElementById('btn-submit-lanc').innerText = 'Salvar Lançamento';
+                } catch (error) { console.error(error); alert("Erro ao salvar."); }
             });
-        }
-        
-        // --- MUDANÇA AQUI: Limpa os campos para o próximo lançamento, mas NÃO fecha o modal ---
-        document.getElementById('lanc-estaca-origem').value = '';
-        document.getElementById('lanc-estaca-final').value = '';
-        document.getElementById('lanc-trecho').value = '';
-        document.getElementById('lanc-carradas').value = '';
-        document.getElementById('lanc-areia').value = '';
-        document.getElementById('lanc-estaca-final').focus(); // Foca no próximo campo a ser preenchido
-        
-        editandoIdLancamento = null;
-        document.getElementById('lanc-modal-title').innerText = 'Lançar Produção';
-        document.getElementById('btn-submit-lanc').innerText = 'Salvar Lançamento';
 
-    } catch (error) {
-        console.error(error); alert("Erro ao salvar.");
-    }
-});
             document.getElementById('btn-add-pde').addEventListener('click', () => {
                 if (!isAdmin) return alert("Apenas administradores.");
                 document.getElementById('form-pde').reset();
@@ -1690,31 +1683,9 @@ metaInput.addEventListener('change', (e) => {
             document.getElementById('form-pde').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!isAdmin) return alert("Apenas administradores.");
-                
-                const record = {
-                    data: document.getElementById('pde-data').value,
-                    tag: document.getElementById('pde-tag').value.toUpperCase(),
-                    operador: document.getElementById('pde-operador').value,
-                    horimetroIni: parseFloat(document.getElementById('pde-horimetro-ini').value) || 0,
-                    horimetroFim: parseFloat(document.getElementById('pde-horimetro-fim').value) || 0,
-                    servicos: [],
-                    timestamp: new Date()
-                };
-
-                document.querySelectorAll('.pde-servico-row').forEach(row => {
-                    const tipo = row.querySelector('.pde-serv-tipo').value;
-                    const ini = row.querySelector('.pde-serv-ini').value;
-                    const fim = row.querySelector('.pde-serv-fim').value;
-                    if (ini && fim) record.servicos.push({ tipo, ini, fim });
-                });
-
-                try {
-                    await window.addDoc(window.collection(window.db, "controle_eh"), record);
-                    document.getElementById('pde-modal').style.display = 'none';
-                    alert('PDE salvo na nuvem!');
-                } catch (error) {
-                    console.error(error); alert("Erro ao salvar.");
-                }
+                const record = { data: document.getElementById('pde-data').value, tag: document.getElementById('pde-tag').value.toUpperCase(), operador: document.getElementById('pde-operador').value, horimetroIni: parseFloat(document.getElementById('pde-horimetro-ini').value) || 0, horimetroFim: parseFloat(document.getElementById('pde-horimetro-fim').value) || 0, servicos: [], timestamp: new Date() };
+                document.querySelectorAll('.pde-servico-row').forEach(row => { const tipo = row.querySelector('.pde-serv-tipo').value; const ini = row.querySelector('.pde-serv-ini').value; const fim = row.querySelector('.pde-serv-fim').value; if (ini && fim) record.servicos.push({ tipo, ini, fim }); });
+                try { await window.addDoc(window.collection(window.db, "controle_eh"), record); document.getElementById('pde-modal').style.display = 'none'; alert('PDE salvo na nuvem!'); } catch (error) { console.error(error); alert("Erro ao salvar."); }
             });
 
             document.getElementById('eh-prev-month').addEventListener('click', () => { ehMesAtual.setMonth(ehMesAtual.getMonth() - 1); renderPainelEH(); });
@@ -1725,31 +1696,21 @@ metaInput.addEventListener('change', (e) => {
             renderBotoesMeses(); 
         }
 
-        // Funções globais para Editar/Excluir Lançamentos da Tabela
         window.prepararEdicaoLancamento = function(id) {
             if (!isAdmin) return alert("Apenas administradores podem editar.");
             const lanc = dbProducao.find(l => l.id === id);
             if (!lanc) return alert("Lançamento não encontrado.");
-
             editandoIdLancamento = id;
             document.getElementById('lanc-modal-title').innerText = 'Editar Produção';
             document.getElementById('btn-submit-lanc').innerText = 'Salvar Alterações';
-            
             document.getElementById('lanc-id').value = id;
             document.getElementById('lanc-date').value = lanc.data;
             document.getElementById('lanc-apontador').value = lanc.apontador || '';
             document.getElementById('lanc-servico').value = lanc.servico;
             document.getElementById('lanc-material').value = lanc.material || 'Solo/Aterro';
-            
             document.getElementById('lanc-local').value = lanc.local || 'CAIXA DE EMPRÉSTIMO';
             document.getElementById('lanc-local').dispatchEvent(new Event('change'));
-            
-            if (lanc.local === 'JAZIDA') {
-                document.getElementById('lanc-jazida').value = lanc.jazidaNome || '';
-            } else {
-                document.getElementById('lanc-estaca-origem').value = lanc.estacaOrigem || '';
-            }
-            
+            if (lanc.local === 'JAZIDA') { document.getElementById('lanc-jazida').value = lanc.jazidaNome || ''; } else { document.getElementById('lanc-estaca-origem').value = lanc.estacaOrigem || ''; }
             document.getElementById('lanc-estaca-final').value = lanc.estacaFinal || '';
             document.getElementById('lanc-trecho').value = lanc.trecho || '';
             document.getElementById('lanc-cb').value = lanc.cb || '';
@@ -1757,26 +1718,19 @@ metaInput.addEventListener('change', (e) => {
             document.getElementById('lanc-carradas').value = lanc.carradas || '';
             document.getElementById('lanc-capacidade').value = lanc.capacidade || '';
             document.getElementById('lanc-areia').value = lanc.areia || '';
-
             document.getElementById('lancamento-modal').style.display = 'flex';
         };
 
         window.deletarLancamento = async function(id) {
             if (!isAdmin) return;
             if (confirm("Tem certeza que deseja EXCLUIR este lançamento? O gráfico e os KPIs serão atualizados.")) {
-                try {
-                    await window.deleteDoc(window.doc(window.db, "producao", id));
-                } catch (error) {
-                    console.error("Erro ao deletar:", error);
-                    alert("Erro ao excluir o lançamento.");
-                }
+                try { await window.deleteDoc(window.doc(window.db, "producao", id)); } catch (error) { console.error("Erro ao deletar:", error); alert("Erro ao excluir o lançamento."); }
             }
         };
 
         function escutarProducao() {
             if (!window.firebaseReady) { setTimeout(escutarProducao, 500); return; }
             if (unsubscribeProducao) unsubscribeProducao();
-            
             const q = window.query(window.collection(window.db, "producao"), window.orderBy("timestamp", "desc"));
             unsubscribeProducao = window.onSnapshot(q, (snapshot) => {
                 dbProducao = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1788,7 +1742,6 @@ metaInput.addEventListener('change', (e) => {
         function escutarControleEH() {
             if (!window.firebaseReady) { setTimeout(escutarControleEH, 500); return; }
             if (unsubscribeControleEH) unsubscribeControleEH();
-            
             const q = window.query(window.collection(window.db, "controle_eh"), window.orderBy("timestamp", "desc"));
             unsubscribeControleEH = window.onSnapshot(q, (snapshot) => {
                 dbControleEH = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1799,28 +1752,19 @@ metaInput.addEventListener('change', (e) => {
 
         function addServicoPDE() {
             const container = document.getElementById('pde-servicos-list');
-            const div = document.createElement('div');
-            div.className = 'pde-servico-row form-row';
-            div.style.marginBottom = '10px';
+            const div = document.createElement('div'); div.className = 'pde-servico-row form-row'; div.style.marginBottom = '10px';
             div.innerHTML = `
                 <div class="form-group" style="margin-bottom:0;">
                     <select class="form-control pde-serv-tipo" required>
-                        <option value="Carregamento">Carregamento</option>
-                        <option value="Almoço">Almoço</option>
-                        <option value="Drenagem/Escavação">Drenagem/Escavação</option>
-                        <option value="Limpeza/Supressão">Limpeza/Supressão</option>
-                        <option value="Manutenção">Manutenção</option>
-                        <option value="Revisão Preventiva">Revisão Preventiva</option>
-                        <option value="Não trabalhou">Não trabalhou</option>
-                        <option value="À disposição">À disposição</option>
+                        <option value="Carregamento">Carregamento</option><option value="Almoço">Almoço</option><option value="Drenagem/Escavação">Drenagem/Escavação</option>
+                        <option value="Limpeza/Supressão">Limpeza/Supressão</option><option value="Manutenção">Manutenção</option><option value="Revisão Preventiva">Revisão Preventiva</option>
+                        <option value="Não trabalhou">Não trabalhou</option><option value="À disposição">À disposição</option>
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:0; display:flex; gap:5px;">
-                    <input type="time" class="form-control pde-serv-ini" required>
-                    <input type="time" class="form-control pde-serv-fim" required>
+                    <input type="time" class="form-control pde-serv-ini" required><input type="time" class="form-control pde-serv-fim" required>
                     <button type="button" class="btn btn-outline" style="padding: 5px;" onclick="this.parentElement.parentElement.remove()">X</button>
-                </div>
-            `;
+                </div>`;
             container.appendChild(div);
         }
 
@@ -1829,16 +1773,14 @@ metaInput.addEventListener('change', (e) => {
             document.getElementById('eh-mes-ano-title').textContent = `${months[ehMesAtual.getMonth()]} de ${ehMesAtual.getFullYear()}`;
             document.getElementById('eh-month-year').textContent = `${months[ehMesAtual.getMonth()]} de ${ehMesAtual.getFullYear()}`;
             
-            const grid = document.getElementById('eh-calendar-grid');
-            grid.innerHTML = '';
+            const grid = document.getElementById('eh-calendar-grid'); grid.innerHTML = '';
             const daysOfWeek = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
             daysOfWeek.forEach(d => { const el = document.createElement('div'); el.className = 'day-name'; el.textContent = d; grid.appendChild(el); });
             const year = ehMesAtual.getFullYear(); const month = ehMesAtual.getMonth();
             const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
             for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
             for (let i = 1; i <= daysInMonth; i++) {
-                const dayEl = document.createElement('div');
-                dayEl.className = 'day'; dayEl.textContent = i;
+                const dayEl = document.createElement('div'); dayEl.className = 'day'; dayEl.textContent = i;
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                 if (dateStr === ehDataSelecionada) dayEl.classList.add('active');
                 dayEl.onclick = () => { ehDataSelecionada = dateStr; renderPainelEH(); };
@@ -1857,51 +1799,23 @@ metaInput.addEventListener('change', (e) => {
 
             const headerCols = document.getElementById('eh-columns-header');
             const gridCols = document.getElementById('eh-grid');
-            headerCols.innerHTML = '';
-            gridCols.innerHTML = '';
+            headerCols.innerHTML = ''; gridCols.innerHTML = '';
+            let totalVolumeDia = 0; let totalHorasCarregamento = 0;
 
-            let totalVolumeDia = 0;
-            let totalHorasCarregamento = 0;
-
-            if (tagsEH.length === 0) {
-                gridCols.innerHTML = '<div class="empty-state" style="width:100%; padding-top:50px;">Nenhum lançamento para este dia.</div>';
-                document.getElementById('eh-header-stats').textContent = '';
-            }
+            if (tagsEH.length === 0) { gridCols.innerHTML = '<div class="empty-state" style="width:100%; padding-top:50px;">Nenhum lançamento para este dia.</div>'; document.getElementById('eh-header-stats').textContent = ''; }
 
             tagsEH.forEach(tag => {
-                const colHeader = document.createElement('div');
-                colHeader.className = 'eh-col-header';
+                const colHeader = document.createElement('div'); colHeader.className = 'eh-col-header';
                 colHeader.innerHTML = `<div class="eh-title">${tag}</div>`;
-                
                 const prodEH = producaoDoDia.filter(p => p.eh === tag).reduce((acc, curr) => acc + curr.volume, 0);
                 let horasCarregamentoEH = 0;
-                
                 const regEH = registrosDoDia.filter(r => r.tag === tag);
-                regEH.forEach(r => {
-                    if (r.servicos) {
-                        r.servicos.forEach(s => {
-                            if (s.tipo === 'Carregamento') {
-                                const [hIni, mIni] = s.ini.split(':').map(Number);
-                                const [hFim, mFim] = s.fim.split(':').map(Number);
-                                let diff = (hFim * 60 + mFim) - (hIni * 60 + mIni);
-                                if (diff < 0) diff += 24 * 60;
-                                horasCarregamentoEH += diff / 60;
-                            }
-                        });
-                    }
-                });
-
-                totalVolumeDia += prodEH;
-                totalHorasCarregamento += horasCarregamentoEH;
-
+                regEH.forEach(r => { if (r.servicos) { r.servicos.forEach(s => { if (s.tipo === 'Carregamento') { const [hIni, mIni] = s.ini.split(':').map(Number); const [hFim, mFim] = s.fim.split(':').map(Number); let diff = (hFim * 60 + mFim) - (hIni * 60 + mIni); if (diff < 0) diff += 24 * 60; horasCarregamentoEH += diff / 60; } }); } });
+                totalVolumeDia += prodEH; totalHorasCarregamento += horasCarregamentoEH;
                 const produtividadeEH = horasCarregamentoEH > 0 ? (prodEH / horasCarregamentoEH).toFixed(1) : '0.0';
                 colHeader.innerHTML += `<div class="eh-stats">${produtividadeEH} m³/h</div>`;
                 headerCols.appendChild(colHeader);
-
-                const colGrid = document.createElement('div');
-                colGrid.className = 'eh-col';
-                colGrid.id = `eh-col-${tag}`;
-                gridCols.appendChild(colGrid);
+                const colGrid = document.createElement('div'); colGrid.className = 'eh-col'; colGrid.id = `eh-col-${tag}`; gridCols.appendChild(colGrid);
             });
 
             if (tagsEH.length > 0) {
@@ -1909,60 +1823,31 @@ metaInput.addEventListener('change', (e) => {
                 document.getElementById('eh-header-stats').innerHTML = `Produtividade Geral: ${produtividadeDia} m³/h | Vol: ${totalVolumeDia.toLocaleString('pt-BR')} m³`;
             }
 
-            const timeAxis = document.getElementById('eh-time-axis');
-            timeAxis.innerHTML = '';
-            const horaInicio = 5;
-            const horaFim = 23;
-            const alturaHora = 60;
-
-            for (let h = horaInicio; h <= horaFim; h++) {
-                const mark = document.createElement('div');
-                mark.className = 'eh-time-mark';
-                mark.style.top = `${(h - horaInicio) * alturaHora}px`;
-                mark.textContent = `${String(h).padStart(2, '0')}:00`;
-                timeAxis.appendChild(mark);
-            }
-            gridCols.style.height = `${(horaFim - horaInicio + 1) * alturaHora}px`;
-            timeAxis.style.height = gridCols.style.height;
+            const timeAxis = document.getElementById('eh-time-axis'); timeAxis.innerHTML = '';
+            const horaInicio = 5; const horaFim = 23; const alturaHora = 60;
+            for (let h = horaInicio; h <= horaFim; h++) { const mark = document.createElement('div'); mark.className = 'eh-time-mark'; mark.style.top = `${(h - horaInicio) * alturaHora}px`; mark.textContent = `${String(h).padStart(2, '0')}:00`; timeAxis.appendChild(mark); }
+            gridCols.style.height = `${(horaFim - horaInicio + 1) * alturaHora}px`; timeAxis.style.height = gridCols.style.height;
 
             registrosDoDia.forEach(r => {
-                const col = document.getElementById(`eh-col-${r.tag}`);
-                if (!col) return;
-
+                const col = document.getElementById(`eh-col-${r.tag}`); if (!col) return;
                 if (r.servicos) {
                     r.servicos.forEach(s => {
-                        const [hIni, mIni] = s.ini.split(':').map(Number);
-                        const [hFim, mFim] = s.fim.split(':').map(Number);
-                        
+                        const [hIni, mIni] = s.ini.split(':').map(Number); const [hFim, mFim] = s.fim.split(':').map(Number);
                         const topPx = ((hIni + mIni/60) - horaInicio) * alturaHora;
                         let alturaPx = ((hFim + mFim/60) - (hIni + mIni/60)) * alturaHora;
                         if (alturaPx < 0) alturaPx += 24 * alturaHora;
                         if (topPx < 0 || topPx > (horaFim - horaInicio + 1) * alturaHora) return;
-
                         let corClasse = 'bg-carregamento';
-                        if (s.tipo === 'Almoço') corClasse = 'bg-almoco';
-                        if (s.tipo === 'Drenagem/Escavação') corClasse = 'bg-drenagem';
-                        if (s.tipo === 'Limpeza/Supressão') corClasse = 'bg-limpeza';
-                        if (s.tipo === 'Manutenção') corClasse = 'bg-manutencao';
-                        if (s.tipo === 'Revisão Preventiva') corClasse = 'bg-revisao';
-                        if (s.tipo === 'Não trabalhou') corClasse = 'bg-nao_trabalhou';
-                        if (s.tipo === 'À disposição') corClasse = 'bg-disposicao';
-
-                        const div = document.createElement('div');
-                        div.className = `eh-event ${corClasse}`;
-                        div.style.top = `${topPx}px`;
-                        div.style.height = `${alturaPx}px`;
-                        div.innerHTML = `
-                            <span class="evt-title">${s.tipo}</span>
-                            <span class="evt-time">${s.ini} - ${s.fim}</span>
-                        `;
+                        if (s.tipo === 'Almoço') corClasse = 'bg-almoco'; if (s.tipo === 'Drenagem/Escavação') corClasse = 'bg-drenagem'; if (s.tipo === 'Limpeza/Supressão') corClasse = 'bg-limpeza'; if (s.tipo === 'Manutenção') corClasse = 'bg-manutencao'; if (s.tipo === 'Revisão Preventiva') corClasse = 'bg-revisao'; if (s.tipo === 'Não trabalhou') corClasse = 'bg-nao_trabalhou'; if (s.tipo === 'À disposição') corClasse = 'bg-disposicao';
+                        const div = document.createElement('div'); div.className = `eh-event ${corClasse}`; div.style.top = `${topPx}px`; div.style.height = `${alturaPx}px`;
+                        div.innerHTML = `<span class="evt-title">${s.tipo}</span><span class="evt-time">${s.ini} - ${s.fim}</span>`;
                         col.appendChild(div);
                     });
                 }
             });
         }
 
-           function renderBotoesMeses() {
+        function renderBotoesMeses() {
             const container = document.getElementById('month-selector'); container.innerHTML = '';
             const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
             meses.forEach((mes, index) => {
@@ -1978,300 +1863,136 @@ metaInput.addEventListener('change', (e) => {
                 container.appendChild(btn);
             });
         }
-       function renderDashboardProducao() {
-    const metaAtual = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
 
-    const dadosMes = dbProducao.filter(d => {
-        if(!d.data) return false;
-        const [ano, mes, dia] = d.data.split('-');
-        return parseInt(ano) === anoSelecionadoProducao && parseInt(mes) === (mesSelecionadoProducao + 1);
-    });
-    let producaoMes = 0, areiaMes = 0;
-    dadosMes.forEach(d => { producaoMes += d.volume || 0; areiaMes += d.areia || 0; });
-    let producaoTotal = dbProducao.reduce((acc, curr) => acc + (curr.volume || 0), 0);
+        function renderDashboardProducao() {
+            const metaAtual = getMetaMes(mesSelecionadoProducao + 1, anoSelecionadoProducao);
+            const dadosMes = dbProducao.filter(d => { if(!d.data) return false; const [ano, mes, dia] = d.data.split('-'); return parseInt(ano) === anoSelecionadoProducao && parseInt(mes) === (mesSelecionadoProducao + 1); });
+            let producaoMes = 0, areiaMes = 0;
+            dadosMes.forEach(d => { producaoMes += d.volume || 0; areiaMes += d.areia || 0; });
+            let producaoTotal = dbProducao.reduce((acc, curr) => acc + (curr.volume || 0), 0);
 
-    document.getElementById('kpi-mes').innerHTML = `${producaoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
-    document.getElementById('kpi-total').innerHTML = `${producaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
-    document.getElementById('kpi-areia').innerHTML = `${areiaMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
+            document.getElementById('kpi-mes').innerHTML = `${producaoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
+            document.getElementById('kpi-total').innerHTML = `${producaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
+            document.getElementById('kpi-areia').innerHTML = `${areiaMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³</span>`;
 
-    const diasNoMes = new Date(anoSelecionadoProducao, mesSelecionadoProducao + 1, 0).getDate();
-    const dadosDiarios = [];
-    let totalHorasMes = 0;
+            const diasNoMes = new Date(anoSelecionadoProducao, mesSelecionadoProducao + 1, 0).getDate();
+            const dadosDiarios = []; let totalHorasMes = 0;
 
-    for (let i = 1; i <= diasNoMes; i++) {
-        const dataStr = `${anoSelecionadoProducao}-${String(mesSelecionadoProducao + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        const lancamentosDia = dadosMes.filter(d => d.data === dataStr);
-        let volTerra = 0, volSub = 0, volBase = 0, areiaDia = 0;
-        
-        lancamentosDia.forEach(l => {
-            if (l.servico === 'Terraplenagem') volTerra += (l.volume || 0);
-            if (l.servico === 'Sub-base') volSub += (l.volume || 0);
-            if (l.servico === 'Base') volBase += (l.volume || 0);
-            areiaDia += (l.areia || 0);
-        });
-
-        let horasCarregamentoDia = 0;
-        const regEHDia = dbControleEH.filter(r => r.data === dataStr);
-        regEHDia.forEach(r => {
-            if (r.servicos) {
-                r.servicos.forEach(s => {
-                    if (s.tipo === 'Carregamento') {
-                        const [hIni, mIni] = s.ini.split(':').map(Number);
-                        const [hFim, mFim] = s.fim.split(':').map(Number);
-                        let diff = (hFim * 60 + mFim) - (hIni * 60 + mIni);
-                        if (diff < 0) diff += 24 * 60;
-                        horasCarregamentoDia += diff / 60;
-                    }
-                });
+            for (let i = 1; i <= diasNoMes; i++) {
+                const dataStr = `${anoSelecionadoProducao}-${String(mesSelecionadoProducao + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const lancamentosDia = dadosMes.filter(d => d.data === dataStr);
+                let volTerra = 0, volSub = 0, volBase = 0, areiaDia = 0;
+                lancamentosDia.forEach(l => { if (l.servico === 'Terraplenagem') volTerra += (l.volume || 0); if (l.servico === 'Sub-base') volSub += (l.volume || 0); if (l.servico === 'Base') volBase += (l.volume || 0); areiaDia += (l.areia || 0); });
+                let horasCarregamentoDia = 0;
+                const regEHDia = dbControleEH.filter(r => r.data === dataStr);
+                regEHDia.forEach(r => { if (r.servicos) { r.servicos.forEach(s => { if (s.tipo === 'Carregamento') { const [hIni, mIni] = s.ini.split(':').map(Number); const [hFim, mFim] = s.fim.split(':').map(Number); let diff = (hFim * 60 + mFim) - (hIni * 60 + mIni); if (diff < 0) diff += 24 * 60; horasCarregamentoDia += diff / 60; } }); } });
+                totalHorasMes += horasCarregamentoDia;
+                dadosDiarios.push({ dia: i, terra: volTerra, sub: volSub, base: volBase, total: volTerra+volSub+volBase, areia: areiaDia, horas: horasCarregamentoDia });
             }
-        });
-        
-        totalHorasMes += horasCarregamentoDia;
-        dadosDiarios.push({ dia: i, terra: volTerra, sub: volSub, base: volBase, total: volTerra+volSub+volBase, areia: areiaDia, horas: horasCarregamentoDia });
-    }
 
-    let produtividadeMes = totalHorasMes > 0 ? (producaoMes / totalHorasMes) : 0;
-    document.getElementById('kpi-produtividade').innerHTML = `${produtividadeMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³/h</span>`;
+            let produtividadeMes = totalHorasMes > 0 ? (producaoMes / totalHorasMes) : 0;
+            document.getElementById('kpi-produtividade').innerHTML = `${produtividadeMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <span class="unit">m³/h</span>`;
 
-    renderGraficoPrincipal(dadosDiarios, metaAtual);
-    renderTabelaProducaoMes(dadosMes);
-    renderFunilTER();
-}
+            renderGraficoPrincipal(dadosDiarios, metaAtual);
+            renderTabelaProducaoMes(dadosMes);
+            renderFunilTER();
+        }
 
-        // Nova função para renderizar a tabela de lançamentos
         function renderTabelaProducaoMes(dadosMes) {
-            const tbody = document.querySelector('#tabela-producao-mes tbody');
-            tbody.innerHTML = '';
-
-            if (dadosMes.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Nenhum lançamento neste mês.</td></tr>';
-                return;
-            }
-
-            // Ordena por data descendente
+            const tbody = document.querySelector('#tabela-producao-mes tbody'); tbody.innerHTML = '';
+            if (dadosMes.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Nenhum lançamento neste mês.</td></tr>'; return; }
             const dadosOrdenados = [...dadosMes].sort((a, b) => new Date(b.data) - new Date(a.data));
-
             dadosOrdenados.forEach(lanc => {
-                const tr = document.createElement('tr');
-                const dataFormatada = lanc.data.split('-').reverse().join('/');
+                const tr = document.createElement('tr'); const dataFormatada = lanc.data.split('-').reverse().join('/');
                 let localTexto = lanc.local === 'JAZIDA' ? `Jazida: ${lanc.jazidaNome || 'S/N'}` : (lanc.local || 'Empréstimo');
-                
                 tr.innerHTML = `
-                    <td>${dataFormatada}</td>
-                    <td><strong>${lanc.trecho || '-'}</strong></td>
-                    <td>${localTexto}</td>
-                    <td>${lanc.estacaFinal || '-'}</td>
-                    <td>${lanc.servico || '-'}</td>
-                    <td>${lanc.carradas || 0}</td>
+                    <td>${dataFormatada}</td><td><strong>${lanc.trecho || '-'}</strong></td><td>${localTexto}</td>
+                    <td>${lanc.estacaFinal || '-'}</td><td>${lanc.servico || '-'}</td><td>${lanc.carradas || 0}</td>
                     <td>${(lanc.volume || 0).toLocaleString('pt-BR')}</td>
                     <td style="text-align: center; white-space: nowrap;">
-                        ${isAdmin ? `
-                            <button class="btn btn-sm btn-outline" style="padding: 3px 6px; border-color: #001C54; color: #001C54; display: inline-flex;" onclick="prepararEdicaoLancamento('${lanc.id}')" title="Editar">✏️</button>
-                            <button class="btn btn-sm btn-outline" style="padding: 3px 6px; border-color: #d32f2f; color: #d32f2f; display: inline-flex;" onclick="deletarLancamento('${lanc.id}')" title="Excluir">🗑️</button>
-                        ` : '-'}
-                    </td>
-                `;
+                        ${isAdmin ? `<button class="btn btn-sm btn-outline" style="padding: 3px 6px; border-color: #001C54; color: #001C54; display: inline-flex;" onclick="prepararEdicaoLancamento('${lanc.id}')" title="Editar">✏️</button>
+                            <button class="btn btn-sm btn-outline" style="padding: 3px 6px; border-color: #d32f2f; color: #d32f2f; display: inline-flex;" onclick="deletarLancamento('${lanc.id}')" title="Excluir">🗑️</button>` : '-'}
+                    </td>`;
                 tbody.appendChild(tr);
             });
         }
-function renderFunilTER() {
-    const ctx = document.getElementById('graficoFunil').getContext('2d');
-    if (funilChartInstance) funilChartInstance.destroy();
 
-    const totaisTer = { 'TER01': 0, 'TER02': 0, 'TER03': 0, 'TER04': 0, 'TER05': 0 };
-    dbProducao.forEach(l => {
-        if (l.trecho && totaisTer[l.trecho] !== undefined) {
-            totaisTer[l.trecho] += (l.volume || 0);
+        function renderFunilTER() {
+            const ctx = document.getElementById('graficoFunil').getContext('2d');
+            if (funilChartInstance) funilChartInstance.destroy();
+            const totaisTer = { 'TER01': 0, 'TER02': 0, 'TER03': 0, 'TER04': 0, 'TER05': 0 };
+            dbProducao.forEach(l => { if (l.trecho && totaisTer[l.trecho] !== undefined) { totaisTer[l.trecho] += (l.volume || 0); } });
+            const labels = ['TER01', 'TER02', 'TER03', 'TER04', 'TER05'];
+            const dadosReais = labels.map(l => totaisTer[l]);
+            const maxProjeto = Math.max(...Object.values(QUANTIDADES_PROJETO));
+            const dadosVisual = dadosReais.map((val, i) => Math.max(val, maxProjeto * 0.02));
+
+            funilChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ data: dadosVisual, backgroundColor: labels.map(l => CORES_TER[l]), borderWidth: 0, barPercentage: 1, categoryPercentage: 1 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 50, bottom: 0, left: 0, right: 0 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: function(context) { const i = context.dataIndex; const ter = labels[i]; return `Lançado: ${dadosReais[i].toLocaleString('pt-BR')} m³ | Projeto: ${QUANTIDADES_PROJETO[ter].toLocaleString('pt-BR')} m³`; } } }
+                    },
+                    scales: { x: { display: false }, y: { display: false, beginAtZero: true, max: maxProjeto * 1.1 } }
+                },
+                plugins: [{
+                    id: 'funilLabels',
+                    afterDatasetsDraw: (chart) => {
+                        const ctx = chart.ctx;
+                        chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                            const ter = labels[index]; const real = dadosReais[index]; const meta = QUANTIDADES_PROJETO[ter]; const perc = ((real / meta) * 100).toFixed(1);
+                            ctx.save(); ctx.textAlign = 'center';
+                            ctx.fillStyle = '#333'; ctx.font = 'bold 13px Arial'; ctx.textBaseline = 'bottom'; ctx.fillText(ter, bar.x, bar.y - 38);
+                            ctx.fillStyle = '#000'; ctx.font = 'bold 16px Arial'; ctx.fillText(real.toLocaleString('pt-BR', {maximumFractionDigits: 0}), bar.x, bar.y - 20);
+                            ctx.fillStyle = '#666'; ctx.font = '11px Arial'; ctx.fillText('Quantidade de projeto', bar.x, bar.y - 5);
+                            ctx.fillStyle = '#000'; ctx.font = 'bold 12px Arial'; ctx.fillText(meta.toLocaleString('pt-BR', {maximumFractionDigits: 0}), bar.x, bar.y + 12);
+                            ctx.font = 'bold 22px Arial'; if (ter === 'TER02') { ctx.fillStyle = '#333'; } else { ctx.fillStyle = '#FFFFFF'; }
+                            let yPos = bar.y + (bar.height / 2) + 8; if (bar.height < 30) yPos = bar.y + 5; ctx.fillText(`${perc}%`, bar.x, yPos);
+                            ctx.restore();
+                        });
+                    }
+                }]
+            });
         }
-    });
 
-    const labels = ['TER01', 'TER02', 'TER03', 'TER04', 'TER05'];
-    const dadosReais = labels.map(l => totaisTer[l]);
-    const maxProjeto = Math.max(...Object.values(QUANTIDADES_PROJETO));
-    const dadosVisual = dadosReais.map((val, i) => Math.max(val, maxProjeto * 0.02));
-
-    funilChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: dadosVisual,
-                backgroundColor: labels.map(l => CORES_TER[l]),
-                borderWidth: 0,
-                barPercentage: 1,
-                categoryPercentage: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 50, bottom: 0, left: 0, right: 0 } },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const i = context.dataIndex;
-                            const ter = labels[i];
-                            return `Lançado: ${dadosReais[i].toLocaleString('pt-BR')} m³ | Projeto: ${QUANTIDADES_PROJETO[ter].toLocaleString('pt-BR')} m³`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: { display: false },
-                y: { display: false, beginAtZero: true, max: maxProjeto * 1.1 }
-            }
-        },
-        plugins: [{
-            id: 'funilLabels',
-            afterDatasetsDraw: (chart) => {
-                const ctx = chart.ctx;
-                chart.getDatasetMeta(0).data.forEach((bar, index) => {
-                    const ter = labels[index];
-                    const real = dadosReais[index];
-                    const meta = QUANTIDADES_PROJETO[ter];
-                    const perc = ((real / meta) * 100).toFixed(1);
-                    
-                    ctx.save();
-                    ctx.textAlign = 'center';
-                    
-                    // Topo (Título)
-                    ctx.fillStyle = '#333';
-                    ctx.font = 'bold 13px Arial';
-                    ctx.textBaseline = 'bottom';
-                    ctx.fillText(ter, bar.x, bar.y - 38);
-                    
-                    // Quantidade Lançada
-                    ctx.fillStyle = '#000';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.fillText(real.toLocaleString('pt-BR', {maximumFractionDigits: 0}), bar.x, bar.y - 20);
-                    
-                    // Subtítulo
-                    ctx.fillStyle = '#666';
-                    ctx.font = '11px Arial';
-                    ctx.fillText('Quantidade de projeto', bar.x, bar.y - 5);
-                    
-                    // Quantidade de Projeto
-                    ctx.fillStyle = '#000';
-                    ctx.font = 'bold 12px Arial';
-                    ctx.fillText(meta.toLocaleString('pt-BR', {maximumFractionDigits: 0}), bar.x, bar.y + 12);
-                    
-                    // Porcentagem
-                    ctx.font = 'bold 22px Arial';
-                    if (ter === 'TER02') {
-                        ctx.fillStyle = '#333'; // Cor escura para contrastar com o amarelo
-                    } else {
-                        ctx.fillStyle = '#FFFFFF'; // Branco para os demais
-                    }
-                    
-                    let yPos = bar.y + (bar.height / 2) + 8;
-                    if (bar.height < 30) yPos = bar.y + 5; // Se o funil for muito fino, joga o texto pra cima
-                    
-                    ctx.fillText(`${perc}%`, bar.x, yPos);
-                    ctx.restore();
-                });
-            }
-        }]
-    });
-}
         function renderGraficoPrincipal(dadosDiarios, metaAtual) {
             const ctx = document.getElementById('graficoProducao').getContext('2d');
             if (graficoPrincipalInstance) graficoPrincipalInstance.destroy();
-            const labels = dadosDiarios.map(d => {
-                const prod = d.horas > 0 ? (d.total / d.horas).toFixed(0) : '0';
-                return [`${d.dia}`, `${prod} m³/h`];
-            });
+            const labels = dadosDiarios.map(d => { const prod = d.horas > 0 ? (d.total / d.horas).toFixed(0) : '0'; return [`${d.dia}`, `${prod} m³/h`]; });
 
-            // Plugin para desenhar a linha verde da meta
             const metaLinePlugin = {
                 id: 'metaLine',
                 afterDraw: (chart) => {
-                    const ctx = chart.ctx;
-                    const yAxis = chart.scales.y;
-                    const xAxis = chart.scales.x;
-                    
-                    // Converte o valor da meta para pixel Y
-                    const yPixel = yAxis.getPixelForValue(metaAtual);
-                    
+                    const ctx = chart.ctx; const yAxis = chart.scales.y; const xAxis = chart.scales.x; const yPixel = yAxis.getPixelForValue(metaAtual);
                     if (yPixel >= yAxis.top && yPixel <= yAxis.bottom) {
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.setLineDash([6, 6]); // Tracejado
-                        ctx.moveTo(xAxis.left, yPixel);
-                        ctx.lineTo(xAxis.right, yPixel);
-                        ctx.lineWidth = 2;
-                        ctx.strokeStyle = '#4CAF50'; // Verde
-                        ctx.stroke();
-                        
-                        // Texto da meta
-                        ctx.fillStyle = '#4CAF50';
-                        ctx.font = 'bold 10px Arial';
-                        ctx.textAlign = 'right';
-                        ctx.textBaseline = 'bottom';
-                       ctx.fillText(`Meta: ${metaAtual} m³`, xAxis.right - 5, yPixel - 5);
-                        ctx.restore();
+                        ctx.save(); ctx.beginPath(); ctx.setLineDash([6, 6]); ctx.moveTo(xAxis.left, yPixel); ctx.lineTo(xAxis.right, yPixel); ctx.lineWidth = 2; ctx.strokeStyle = '#4CAF50'; ctx.stroke();
+                        ctx.fillStyle = '#4CAF50'; ctx.font = 'bold 10px Arial'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(`Meta: ${metaAtual} m³`, xAxis.right - 5, yPixel - 5); ctx.restore();
                     }
                 }
             };
 
             graficoPrincipalInstance = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Terraplenagem', data: dadosDiarios.map(d => d.terra), backgroundColor: '#FFC000', order: 2 },
-                        { label: 'Sub-base', data: dadosDiarios.map(d => d.sub), backgroundColor: '#8B4513', order: 2 },
-                        { label: 'Base', data: dadosDiarios.map(d => d.base), backgroundColor: '#001C54', order: 2 }
-                    ]
-                },
+                data: { labels: labels, datasets: [ { label: 'Terraplenagem', data: dadosDiarios.map(d => d.terra), backgroundColor: '#FFC000', order: 2 }, { label: 'Sub-base', data: dadosDiarios.map(d => d.sub), backgroundColor: '#8B4513', order: 2 }, { label: 'Base', data: dadosDiarios.map(d => d.base), backgroundColor: '#001C54', order: 2 } ] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { 
-                        x: { stacked: true, grid: { display: false },
-                            ticks: {
-                                callback: function(value, index) { return [`${dadosDiarios[index].dia}`, `${dadosDiarios[index].horas > 0 ? (dadosDiarios[index].total/dadosDiarios[index].horas).toFixed(0) : 0} m³/h`]; },
-                                color: function(context) {
-                                    const isDomingo = new Date(anoSelecionadoProducao, mesSelecionadoProducao, dadosDiarios[context.index].dia).getDay() === 0;
-                                    return isDomingo ? '#d32f2f' : '#333';
-                                },
-                                font: { size: 10 }
-                            }
-                        }, 
-                        y: { stacked: true, beginAtZero: true } 
-                    },
+                    scales: { x: { stacked: true, grid: { display: false }, ticks: { callback: function(value, index) { return [`${dadosDiarios[index].dia}`, `${dadosDiarios[index].horas > 0 ? (dadosDiarios[index].total/dadosDiarios[index].horas).toFixed(0) : 0} m³/h`]; }, color: function(context) { const isDomingo = new Date(anoSelecionadoProducao, mesSelecionadoProducao, dadosDiarios[context.index].dia).getDay() === 0; return isDomingo ? '#d32f2f' : '#333'; }, font: { size: 10 } } }, y: { stacked: true, beginAtZero: true } },
                     plugins: { legend: { position: 'bottom' } }
                 },
                 plugins: [metaLinePlugin, {
                     id: 'customLabels', afterDatasetsDraw: (chart) => {
                         const ctx = chart.ctx;
-                        chart.data.datasets.forEach((dataset, i) => {
-                            const meta = chart.getDatasetMeta(i);
-                            if (!meta.hidden) {
-                                meta.data.forEach((bar, index) => {
-                                    const data = dataset.data[index];
-                                    if (data > 0) {
-                                        ctx.fillStyle = (dataset.label === 'Sub-base' || dataset.label === 'Base') ? '#FFFFFF' : '#333';
-                                        ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                                        ctx.fillText(data.toLocaleString('pt-BR'), bar.x, bar.y + (bar.height / 2));
-                                    }
-                                });
-                            }
-                        });
+                        chart.data.datasets.forEach((dataset, i) => { const meta = chart.getDatasetMeta(i); if (!meta.hidden) { meta.data.forEach((bar, index) => { const data = dataset.data[index]; if (data > 0) { ctx.fillStyle = (dataset.label === 'Sub-base' || dataset.label === 'Base') ? '#FFFFFF' : '#333'; ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(data.toLocaleString('pt-BR'), bar.x, bar.y + (bar.height / 2)); } }); } });
                         const metas = [chart.getDatasetMeta(0), chart.getDatasetMeta(1), chart.getDatasetMeta(2)];
                         dadosDiarios.forEach((d, index) => {
                             if (d.total > 0) {
-                                let topY = Infinity;
-                                metas.forEach(meta => { if (meta.data[index] && meta.data[index].y < topY) topY = meta.data[index].y; });
-                                const x = metas[0].data[index].x;
-                                const isMetaBatida = d.total >= metaAtual;
-                                if (isMetaBatida) {
-                                    ctx.fillStyle = '#4CAF50';
-                                    const textWidth = ctx.measureText(d.total.toLocaleString('pt-BR')).width + 10;
-                                    ctx.beginPath(); ctx.roundRect(x - textWidth/2, topY - 20, textWidth, 16, 4); ctx.fill();
-                                }
-                                ctx.fillStyle = isMetaBatida ? '#FFFFFF' : '#001C54'; ctx.font = 'bold 11px Arial';
-                                ctx.fillText(d.total.toLocaleString('pt-BR'), x, topY - 12);
+                                let topY = Infinity; metas.forEach(meta => { if (meta.data[index] && meta.data[index].y < topY) topY = meta.data[index].y; });
+                                const x = metas[0].data[index].x; const isMetaBatida = d.total >= metaAtual;
+                                if (isMetaBatida) { ctx.fillStyle = '#4CAF50'; const textWidth = ctx.measureText(d.total.toLocaleString('pt-BR')).width + 10; ctx.beginPath(); ctx.roundRect(x - textWidth/2, topY - 20, textWidth, 16, 4); ctx.fill(); }
+                                ctx.fillStyle = isMetaBatida ? '#FFFFFF' : '#001C54'; ctx.font = 'bold 11px Arial'; ctx.fillText(d.total.toLocaleString('pt-BR'), x, topY - 12);
                             }
                         });
                     }
@@ -2287,60 +2008,25 @@ function renderFunilTER() {
         let dbAgregados = [];
         let filtroMovimentacaoAtual = 'todos';
         let filtroAgrMaterial = 'todos'; let filtroAgrTipo = 'todos'; let filtroAgrSub = '';
-let filtroAgrAno = 'todos'; let filtroAgrMes = 'todos'; let filtroAgrDia = 'todos';
-        
+        let filtroAgrAno = 'todos'; let filtroAgrMes = 'todos'; let filtroAgrDia = 'todos';
         let unsubscribeTanques, unsubscribeMov, unsubscribeAgr;
 
         function initMateriais() {
-            document.getElementById('btn-tab-betuminosos').addEventListener('click', () => {
-                document.getElementById('btn-tab-betuminosos').classList.add('active');
-                document.getElementById('btn-tab-agregados').classList.remove('active');
-                document.getElementById('content-betuminosos').style.display = 'block';
-                document.getElementById('content-agregados').style.display = 'none';
-            });
-            document.getElementById('btn-tab-agregados').addEventListener('click', () => {
-                document.getElementById('btn-tab-agregados').classList.add('active');
-                document.getElementById('btn-tab-betuminosos').classList.remove('active');
-                document.getElementById('content-agregados').style.display = 'block';
-                document.getElementById('content-betuminosos').style.display = 'none';
-            });
-            document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', () => {
-                document.getElementById('modal-tanque').style.display = 'none';
-                document.getElementById('modal-regua').style.display = 'none';
-                document.getElementById('modal-movimentacao').style.display = 'none';
-                document.getElementById('modal-agr-entrada').style.display = 'none';
-                document.getElementById('modal-agr-saida').style.display = 'none';
-            }));
+            document.getElementById('btn-tab-betuminosos').addEventListener('click', () => { document.getElementById('btn-tab-betuminosos').classList.add('active'); document.getElementById('btn-tab-agregados').classList.remove('active'); document.getElementById('content-betuminosos').style.display = 'block'; document.getElementById('content-agregados').style.display = 'none'; });
+            document.getElementById('btn-tab-agregados').addEventListener('click', () => { document.getElementById('btn-tab-agregados').classList.add('active'); document.getElementById('btn-tab-betuminosos').classList.remove('active'); document.getElementById('content-agregados').style.display = 'block'; document.getElementById('content-betuminosos').style.display = 'none'; });
+            document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', () => { document.getElementById('modal-tanque').style.display = 'none'; document.getElementById('modal-regua').style.display = 'none'; document.getElementById('modal-movimentacao').style.display = 'none'; document.getElementById('modal-agr-entrada').style.display = 'none'; document.getElementById('modal-agr-saida').style.display = 'none'; }));
 
-            document.getElementById('tanque-tipo').addEventListener('change', (e) => {
-                document.getElementById('campos-cilindrico').style.display = (e.target.value === 'cilindrico') ? 'block' : 'none';
-                document.getElementById('campos-eliptico').style.display = (e.target.value === 'eliptico') ? 'block' : 'none';
-            });
+            document.getElementById('tanque-tipo').addEventListener('change', (e) => { document.getElementById('campos-cilindrico').style.display = (e.target.value === 'cilindrico') ? 'block' : 'none'; document.getElementById('campos-eliptico').style.display = (e.target.value === 'eliptico') ? 'block' : 'none'; });
 
-            document.getElementById('btn-gerenciar-tanques').addEventListener('click', () => {
-                if (!isAdmin) return alert("Apenas administradores.");
-                document.getElementById('form-tanque').reset();
-                document.getElementById('campos-cilindrico').style.display = 'block';
-                document.getElementById('campos-eliptico').style.display = 'none';
-                document.getElementById('modal-tanque').style.display = 'flex';
-            });
+            document.getElementById('btn-gerenciar-tanques').addEventListener('click', () => { if (!isAdmin) return alert("Apenas administradores."); document.getElementById('form-tanque').reset(); document.getElementById('campos-cilindrico').style.display = 'block'; document.getElementById('campos-eliptico').style.display = 'none'; document.getElementById('modal-tanque').style.display = 'flex'; });
 
             document.getElementById('form-tanque').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!isAdmin) return alert("Apenas administradores.");
+                e.preventDefault(); if (!isAdmin) return alert("Apenas administradores.");
                 const tipo = document.getElementById('tanque-tipo').value;
                 const novoTanque = { tag: document.getElementById('tanque-tag').value.toUpperCase(), material: document.getElementById('tanque-material').value, tipo: tipo, nivelAtual: 0, volumeAtual: 0, capacidadeTotal: 0 };
-                if (tipo === 'cilindrico') {
-                    novoTanque.diametro = parseFloat(document.getElementById('tanque-diametro').value);
-                    novoTanque.comprimento = parseFloat(document.getElementById('tanque-comprimento-cil').value);
-                    novoTanque.capacidadeTotal = (Math.PI * Math.pow(novoTanque.diametro / 2, 2) * novoTanque.comprimento) * 1000;
-                } else {
-                    novoTanque.largura = parseFloat(document.getElementById('tanque-largura').value);
-                    novoTanque.comprimento = parseFloat(document.getElementById('tanque-comprimento-eli').value);
-                    novoTanque.alturaTotal = parseFloat(document.getElementById('tanque-altura').value);
-                    novoTanque.capacidadeTotal = ((Math.PI * (novoTanque.largura / 2) * (novoTanque.alturaTotal / 2) * novoTanque.comprimento) * 1.28 * 0.782) * 1000;
-                }
-                await window.addDoc(window.collection(window.db, "tanques"), novoTanque);
+                if (tipo === 'cilindrico') { novoTanque.diametro = parseFloat(document.getElementById('tanque-diametro').value); novoTanque.comprimento = parseFloat(document.getElementById('tanque-comprimento-cil').value); novoTanque.capacidadeTotal = (Math.PI * Math.pow(novoTanque.diametro / 2, 2) * novoTanque.comprimento) * 1000; } 
+                else { novoTanque.largura = parseFloat(document.getElementById('tanque-largura').value); novoTanque.comprimento = parseFloat(document.getElementById('tanque-comprimento-eli').value); novoTanque.alturaTotal = parseFloat(document.getElementById('tanque-altura').value); novoTanque.capacidadeTotal = ((Math.PI * (novoTanque.largura / 2) * (novoTanque.alturaTotal / 2) * novoTanque.comprimento) * 1.28 * 0.782) * 1000; }
+                                await window.addDoc(window.collection(window.db, "tanques"), novoTanque); 
                 document.getElementById('modal-tanque').style.display = 'none'; 
             });
 
@@ -2406,117 +2092,102 @@ let filtroAgrAno = 'todos'; let filtroAgrMes = 'todos'; let filtroAgrDia = 'todo
             });
             document.getElementById('agr-sai-destino').addEventListener('change', (e) => { document.getElementById('campos-destino-obra').style.display = (e.target.value === 'obra') ? 'block' : 'none'; document.getElementById('campos-destino-sub').style.display = (e.target.value === 'subempreiteira') ? 'block' : 'none'; });
 
-           document.getElementById('form-agr-entrada').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!isAdmin) return alert("Apenas administradores.");
-    const ent = {
-        tipoMov: 'entrada',
-        data: document.getElementById('agr-ent-data').value,
-        material: document.getElementById('agr-ent-tipo').value,
-        caminhao: document.getElementById('agr-ent-caminhao').value.toUpperCase(),
-        transportador: document.getElementById('agr-ent-transportador').value,
-        local: document.getElementById('agr-ent-local').value,
-        qtd: parseFloat(document.getElementById('agr-ent-qtd').value),
-        valor: parseFloat(document.getElementById('agr-ent-valor').value),
-        nota: document.getElementById('agr-ent-nota').value,
-        fornecedor: document.getElementById('agr-ent-fornecedor').value,
-        motorista: document.getElementById('agr-ent-motorista').value,
-        timestamp: new Date()
-    };
+            document.getElementById('form-agr-entrada').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
+                const ent = {
+                    tipoMov: 'entrada',
+                    data: document.getElementById('agr-ent-data').value,
+                    material: document.getElementById('agr-ent-tipo').value,
+                    caminhao: document.getElementById('agr-ent-caminhao').value.toUpperCase(),
+                    transportador: document.getElementById('agr-ent-transportador').value,
+                    local: document.getElementById('agr-ent-local').value,
+                    qtd: parseFloat(document.getElementById('agr-ent-qtd').value),
+                    valor: parseFloat(document.getElementById('agr-ent-valor').value),
+                    nota: document.getElementById('agr-ent-nota').value,
+                    fornecedor: document.getElementById('agr-ent-fornecedor').value,
+                    motorista: document.getElementById('agr-ent-motorista').value,
+                    timestamp: new Date()
+                };
+                try {
+                    const editId = e.target.dataset.editId;
+                    if (editId) {
+                        await window.updateDoc(window.doc(window.db, "agregados", editId), ent);
+                        delete e.target.dataset.editId;
+                    } else {
+                        await window.addDoc(window.collection(window.db, "agregados"), ent);
+                    }
+                    document.getElementById('modal-agr-entrada').style.display = 'none';
+                } catch (err) {
+                    console.error("Erro ao salvar entrada:", err);
+                    alert("Erro ao salvar. Tente novamente.");
+                }
+            });
 
-    try {
-        const editId = e.target.dataset.editId;
-        if (editId) {
-            await window.updateDoc(window.doc(window.db, "agregados", editId), ent);
-            delete e.target.dataset.editId;
-        } else {
-            await window.addDoc(window.collection(window.db, "agregados"), ent);
-        }
-        document.getElementById('modal-agr-entrada').style.display = 'none';
-    } catch (err) {
-        console.error("Erro ao salvar entrada:", err);
-        alert("Erro ao salvar. Tente novamente.");
-    }
-});
+            // DENSIDADES (t/m³) — ajuste conforme ensaios do laboratório
+            const DENSIDADES_AGREGADOS = {
+                'Brita 0': 1.5,
+                'Brita 1': 1.5,
+                'Pó de Brita': 1.5,
+                'BGS': 1.8,
+                'Pedra Rachão': 1.5
+            };
 
-           // DENSIDADES (t/m³) — ajuste conforme ensaios do laboratório
-const DENSIDADES_AGREGADOS = {
-    'Brita 0': 1.5,
-    'Brita 1': 1.5,
-    'Pó de Brita': 1.5,
-    'BGS': 1.8,
-    'Pedra Rachão': 1.5
-};
+            document.getElementById('form-agr-saida').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!isAdmin) return alert("Apenas administradores.");
 
-document.getElementById('form-agr-saida').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!isAdmin) return alert("Apenas administradores.");
+                const carradas = parseFloat(document.getElementById('agr-sai-carradas').value);
+                const capacidade = parseFloat(document.getElementById('agr-sai-capacidade').value); // m³
+                const destino = document.getElementById('agr-sai-destino').value;
+                const material = document.getElementById('agr-sai-tipo').value;
+                const densidade = DENSIDADES_AGREGADOS[material] || 1.5;
 
-    const carradas = parseFloat(document.getElementById('agr-sai-carradas').value);
-    const capacidade = parseFloat(document.getElementById('agr-sai-capacidade').value); // m³
-    const destino = document.getElementById('agr-sai-destino').value;
-    const material = document.getElementById('agr-sai-tipo').value;
-    const densidade = DENSIDADES_AGREGADOS[material] || 1.5;
+                const volumeM3 = carradas * capacidade;   // m³
+                const qtdTon   = volumeM3 * densidade;    // toneladas ✅
 
-    const volumeM3 = carradas * capacidade;   // m³
-    const qtdTon   = volumeM3 * densidade;    // toneladas ✅
+                const sai = {
+                    tipoMov: 'saida',
+                    data: document.getElementById('agr-sai-data').value,
+                    material: material,
+                    caminhao: document.getElementById('agr-sai-caminhao').value.toUpperCase(),
+                    transportador: document.getElementById('agr-sai-transportador').value,
+                    local: document.getElementById('agr-sai-local').value,
+                    carradas: carradas,
+                    capacidade: capacidade,
+                    volumeM3: volumeM3,
+                    densidade: densidade,
+                    qtd: qtdTon,
+                    destino: destino,
+                    servico: destino === 'obra' ? document.getElementById('agr-sai-servico').value : '-',
+                    estacaIni: destino === 'obra' ? document.getElementById('agr-sai-estaca-ini').value : '-',
+                    estacaFim: destino === 'obra' ? document.getElementById('agr-sai-estaca-fim').value : '-',
+                    subempreiteira: destino === 'subempreiteira' ? document.getElementById('agr-sai-nome-sub').value : '-',
+                    destinoFinal: destino === 'subempreiteira' ? document.getElementById('agr-sai-destino-final').value : '-',
+                    timestamp: new Date()
+                };
 
-    const sai = {
-        tipoMov: 'saida',
-        data: document.getElementById('agr-sai-data').value,
-        material: material,
-        caminhao: document.getElementById('agr-sai-caminhao').value.toUpperCase(),
-        transportador: document.getElementById('agr-sai-transportador').value,
-        local: document.getElementById('agr-sai-local').value,
-        carradas: carradas,
-        capacidade: capacidade,
-        volumeM3: volumeM3,
-        densidade: densidade,
-        qtd: qtdTon,
-        destino: destino,
-        servico: destino === 'obra' ? document.getElementById('agr-sai-servico').value : '-',
-        estacaIni: destino === 'obra' ? document.getElementById('agr-sai-estaca-ini').value : '-',
-        estacaFim: destino === 'obra' ? document.getElementById('agr-sai-estaca-fim').value : '-',
-        subempreiteira: destino === 'subempreiteira' ? document.getElementById('agr-sai-nome-sub').value : '-',
-        destinoFinal: destino === 'subempreiteira' ? document.getElementById('agr-sai-destino-final').value : '-',
-        timestamp: new Date()
-    };
-
-    try {
-        const editId = e.target.dataset.editId;
-        if (editId) {
-            await window.updateDoc(window.doc(window.db, "agregados", editId), sai);
-            delete e.target.dataset.editId;
-        } else {
-            await window.addDoc(window.collection(window.db, "agregados"), sai);
-        }
-        document.getElementById('modal-agr-saida').style.display = 'none';
-    } catch (err) {
-        console.error("Erro ao salvar saída de agregado:", err);
-        alert("Erro ao salvar. Tente novamente.");
-    }
-});
+                try {
+                    const editId = e.target.dataset.editId;
+                    if (editId) {
+                        await window.updateDoc(window.doc(window.db, "agregados", editId), sai);
+                        delete e.target.dataset.editId;
+                    } else {
+                        await window.addDoc(window.collection(window.db, "agregados"), sai);
+                    }
+                    document.getElementById('modal-agr-saida').style.display = 'none';
+                } catch (err) {
+                    console.error("Erro ao salvar saída de agregado:", err);
+                    alert("Erro ao salvar. Tente novamente.");
+                }
+            });
 
             document.getElementById('filtro-agr-material').addEventListener('change', (e) => { filtroAgrMaterial = e.target.value; renderTabelaAgregados(); });
-document.getElementById('filtro-agr-tipo').addEventListener('change', (e) => { filtroAgrTipo = e.target.value; renderTabelaAgregados(); });
-document.getElementById('filtro-agr-sub').addEventListener('input', (e) => { filtroAgrSub = e.target.value.toLowerCase(); renderTabelaAgregados(); });
-document.getElementById('filtro-agr-ano').addEventListener('change', (e) => {
-    filtroAgrAno = e.target.value;
-    filtroAgrDia = 'todos';
-    document.getElementById('filtro-agr-dia').value = 'todos';
-    popularDiasAgregados();
-    renderTabelaAgregados();
-    renderAgregados();
-    });
-document.getElementById('filtro-agr-mes').addEventListener('change', (e) => {
-    filtroAgrMes = e.target.value;
-    filtroAgrDia = 'todos';
-    document.getElementById('filtro-agr-dia').value = 'todos';
-    popularDiasAgregados();
-    renderTabelaAgregados();
-    renderAgregados();
-});
-document.getElementById('filtro-agr-dia').addEventListener('change', (e) => { filtroAgrDia = e.target.value; renderTabelaAgregados(); });
+            document.getElementById('filtro-agr-tipo').addEventListener('change', (e) => { filtroAgrTipo = e.target.value; renderTabelaAgregados(); });
+            document.getElementById('filtro-agr-sub').addEventListener('input', (e) => { filtroAgrSub = e.target.value.toLowerCase(); renderTabelaAgregados(); });
+            document.getElementById('filtro-agr-ano').addEventListener('change', (e) => { filtroAgrAno = e.target.value; filtroAgrDia = 'todos'; document.getElementById('filtro-agr-dia').value = 'todos'; popularDiasAgregados(); renderTabelaAgregados(); renderAgregados(); });
+            document.getElementById('filtro-agr-mes').addEventListener('change', (e) => { filtroAgrMes = e.target.value; filtroAgrDia = 'todos'; document.getElementById('filtro-agr-dia').value = 'todos'; popularDiasAgregados(); renderTabelaAgregados(); renderAgregados(); });
+            document.getElementById('filtro-agr-dia').addEventListener('change', (e) => { filtroAgrDia = e.target.value; renderTabelaAgregados(); });
             document.getElementById('btn-relatorio-agregados').addEventListener('click', gerarRelatorioAgregadosPDF);
 
             escutarMateriais();
@@ -2597,215 +2268,153 @@ document.getElementById('filtro-agr-dia').addEventListener('change', (e) => { fi
             });
         }
 
-        // Popula os selects de ano e dia com base nos dados existentes
-function popularFiltrosDataAgregados() {
-    const anosSet = new Set();
-    dbAgregados.forEach(a => {
-        if (a.data) {
-            const [ano] = a.data.split('-');
-            if (ano) anosSet.add(ano);
+        function popularFiltrosDataAgregados() {
+            const anosSet = new Set();
+            dbAgregados.forEach(a => { if (a.data) { const [ano] = a.data.split('-'); if (ano) anosSet.add(ano); } });
+            const selectAno = document.getElementById('filtro-agr-ano');
+            const valorAtualAno = selectAno.value;
+            selectAno.innerHTML = '<option value="todos">Ano: Todos</option>';
+            [...anosSet].sort().forEach(ano => { const opt = document.createElement('option'); opt.value = ano; opt.textContent = ano; selectAno.appendChild(opt); });
+            if ([...selectAno.options].some(o => o.value === valorAtualAno)) { selectAno.value = valorAtualAno; } else { selectAno.value = 'todos'; filtroAgrAno = 'todos'; }
+            popularDiasAgregados();
         }
-    });
-    const selectAno = document.getElementById('filtro-agr-ano');
-    const valorAtualAno = selectAno.value;
-    selectAno.innerHTML = '<option value="todos">Ano: Todos</option>';
-    [...anosSet].sort().forEach(ano => {
-        const opt = document.createElement('option');
-        opt.value = ano; opt.textContent = ano;
-        selectAno.appendChild(opt);
-    });
-    // Restaura seleção se ainda existir
-    if ([...selectAno.options].some(o => o.value === valorAtualAno)) {
-        selectAno.value = valorAtualAno;
-    } else {
-        selectAno.value = 'todos'; filtroAgrAno = 'todos';
-    }
-    popularDiasAgregados();
-}
 
-// Popula o select de dias com base no ano/mês selecionados
-function popularDiasAgregados() {
-    const selectDia = document.getElementById('filtro-agr-dia');
-    const valorAtualDia = selectDia.value;
-    const diasSet = new Set();
-    dbAgregados.forEach(a => {
-        if (!a.data) return;
-        const [ano, mes, dia] = a.data.split('-');
-        if (filtroAgrAno !== 'todos' && ano !== filtroAgrAno) return;
-        if (filtroAgrMes !== 'todos' && parseInt(mes) !== parseInt(filtroAgrMes)) return;
-        diasSet.add(parseInt(dia));
-    });
-    selectDia.innerHTML = '<option value="todos">Dia: Todos</option>';
-    [...diasSet].sort((a,b) => a-b).forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d; opt.textContent = String(d).padStart(2,'0');
-        selectDia.appendChild(opt);
-    });
-    if ([...selectDia.options].some(o => o.value === valorAtualDia)) {
-        selectDia.value = valorAtualDia;
-    } else {
-        selectDia.value = 'todos'; filtroAgrDia = 'todos';
-    }
-}
-
-// Verifica se um registro bate com os filtros de data
-function registroBateFiltroData(a) {
-    if (!a.data) return false;
-    const [ano, mes, dia] = a.data.split('-');
-    if (filtroAgrAno !== 'todos' && ano !== filtroAgrAno) return false;
-    if (filtroAgrMes !== 'todos' && parseInt(mes) !== parseInt(filtroAgrMes)) return false;
-    if (filtroAgrDia !== 'todos' && parseInt(dia) !== parseInt(filtroAgrDia)) return false;
-    return true;
-}
-
-function renderAgregados() {
-    // === KPIs ACUMULADOS DE TODOS OS MESES (Brita 1 e Brita 0) ===
-    let estoqueBrita1 = 0; // entrada - saida (em toneladas)
-    let estoqueBrita0 = 0;
-
-    dbAgregados.forEach(a => {
-        const qtd = a.qtd || 0;
-        if (a.material === 'Brita 1') {
-            estoqueBrita1 += (a.tipoMov === 'entrada') ? qtd : -qtd;
-        } else if (a.material === 'Brita 0') {
-            estoqueBrita0 += (a.tipoMov === 'entrada') ? qtd : -qtd;
+        function popularDiasAgregados() {
+            const selectDia = document.getElementById('filtro-agr-dia');
+            const valorAtualDia = selectDia.value;
+            const diasSet = new Set();
+            dbAgregados.forEach(a => {
+                if (!a.data) return;
+                const [ano, mes, dia] = a.data.split('-');
+                if (filtroAgrAno !== 'todos' && ano !== filtroAgrAno) return;
+                if (filtroAgrMes !== 'todos' && parseInt(mes) !== parseInt(filtroAgrMes)) return;
+                diasSet.add(parseInt(dia));
+            });
+            selectDia.innerHTML = '<option value="todos">Dia: Todos</option>';
+            [...diasSet].sort((a,b) => a-b).forEach(d => { const opt = document.createElement('option'); opt.value = d; opt.textContent = String(d).padStart(2,'0'); selectDia.appendChild(opt); });
+            if ([...selectDia.options].some(o => o.value === valorAtualDia)) { selectDia.value = valorAtualDia; } else { selectDia.value = 'todos'; filtroAgrDia = 'todos'; }
         }
-    });
 
-    document.getElementById('kpi-agr-brita1').textContent = estoqueBrita1.toLocaleString('pt-BR', {maximumFractionDigits:0});
-    document.getElementById('kpi-agr-brita0').textContent = estoqueBrita0.toLocaleString('pt-BR', {maximumFractionDigits:0});
-
-    // === KPIs DE ENTRADAS / SAÍDAS DO PERÍODO FILTRADO ===
-    let entradasPeriodoTon = 0;
-    let saidasPeriodoTon = 0;
-
-    dbAgregados.forEach(a => {
-        if (!registroBateFiltroData(a)) return;
-        if (a.tipoMov === 'entrada') entradasPeriodoTon += (a.qtd || 0);
-        else saidasPeriodoTon += (a.qtd || 0);
-    });
-
-    document.getElementById('kpi-agr-entradas').textContent = entradasPeriodoTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
-    document.getElementById('kpi-agr-saidas').textContent = saidasPeriodoTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
-
-    // Atualiza subtextos com o período selecionado
-    const mesesNomes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    let periodoTexto = 'Todo o período';
-    if (filtroAgrAno !== 'todos' || filtroAgrMes !== 'todos' || filtroAgrDia !== 'todos') {
-        const partes = [];
-        if (filtroAgrDia !== 'todos') partes.push(`Dia ${filtroAgrDia}`);
-        if (filtroAgrMes !== 'todos') partes.push(mesesNomes[parseInt(filtroAgrMes)]);
-        if (filtroAgrAno !== 'todos') partes.push(filtroAgrAno);
-        periodoTexto = partes.join(' / ');
-    }
-    document.getElementById('subtext-entradas').textContent = periodoTexto;
-    document.getElementById('subtext-saidas').textContent = periodoTexto;
-
-    // Popula filtros e renderiza tabela
-    popularFiltrosDataAgregados();
-    renderTabelaAgregados();
-}
-
-    function renderTabelaAgregados() {
-    const tbody = document.querySelector('#tabela-agregados tbody');
-    tbody.innerHTML = '';
-    let filtrados = dbAgregados.filter(a => {
-        if (filtroAgrMaterial !== 'todos' && a.material !== filtroAgrMaterial) return false;
-        if (filtroAgrTipo !== 'todos') {
-            if (filtroAgrTipo === 'entrada' && a.tipoMov !== 'entrada') return false;
-            if (filtroAgrTipo === 'saida_obra' && (a.tipoMov !== 'saida' || a.destino !== 'obra')) return false;
-            if (filtroAgrTipo === 'saida_sub' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira')) return false;
+        function registroBateFiltroData(a) {
+            if (!a.data) return false;
+            const [ano, mes, dia] = a.data.split('-');
+            if (filtroAgrAno !== 'todos' && ano !== filtroAgrAno) return false;
+            if (filtroAgrMes !== 'todos' && parseInt(mes) !== parseInt(filtroAgrMes)) return false;
+            if (filtroAgrDia !== 'todos' && parseInt(dia) !== parseInt(filtroAgrDia)) return false;
+            return true;
         }
-        if (filtroAgrSub !== '' && a.tipoMov === 'saida' && a.destino === 'subempreiteira') {
-    if (!(a.subempreiteira || '').toLowerCase().includes(filtroAgrSub)) return false;
-        } else if (filtroAgrSub !== '' && (a.tipoMov === 'entrada' || a.destino !== 'subempreiteira')) {
-            return false;
+
+        function renderAgregados() {
+            let estoqueBrita1 = 0; let estoqueBrita0 = 0;
+            dbAgregados.forEach(a => {
+                const qtd = a.qtd || 0;
+                if (a.material === 'Brita 1') { estoqueBrita1 += (a.tipoMov === 'entrada') ? qtd : -qtd; } 
+                else if (a.material === 'Brita 0') { estoqueBrita0 += (a.tipoMov === 'entrada') ? qtd : -qtd; }
+            });
+
+            document.getElementById('kpi-agr-brita1').textContent = estoqueBrita1.toLocaleString('pt-BR', {maximumFractionDigits:0});
+            document.getElementById('kpi-agr-brita0').textContent = estoqueBrita0.toLocaleString('pt-BR', {maximumFractionDigits:0});
+
+            let entradasPeriodoTon = 0; let saidasPeriodoTon = 0;
+            dbAgregados.forEach(a => {
+                if (!registroBateFiltroData(a)) return;
+                if (a.tipoMov === 'entrada') entradasPeriodoTon += (a.qtd || 0);
+                else saidasPeriodoTon += (a.qtd || 0);
+            });
+
+            document.getElementById('kpi-agr-entradas').textContent = entradasPeriodoTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
+            document.getElementById('kpi-agr-saidas').textContent = saidasPeriodoTon.toLocaleString('pt-BR', {maximumFractionDigits:0});
+
+            const mesesNomes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            let periodoTexto = 'Todo o período';
+            if (filtroAgrAno !== 'todos' || filtroAgrMes !== 'todos' || filtroAgrDia !== 'todos') {
+                const partes = [];
+                if (filtroAgrDia !== 'todos') partes.push(`Dia ${filtroAgrDia}`);
+                if (filtroAgrMes !== 'todos') partes.push(mesesNomes[parseInt(filtroAgrMes)]);
+                if (filtroAgrAno !== 'todos') partes.push(filtroAgrAno);
+                periodoTexto = partes.join(' / ');
+            }
+            document.getElementById('subtext-entradas').textContent = periodoTexto;
+            document.getElementById('subtext-saidas').textContent = periodoTexto;
+
+            popularFiltrosDataAgregados();
+            renderTabelaAgregados();
         }
-        if (!registroBateFiltroData(a)) return false;
-        return true;
-    });
-    filtrados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    filtrados.forEach(a => {
-        const tr = document.createElement('tr');
-        const dataFormatada = a.data ? a.data.split('-').reverse().join('/') : '-';
-        let detalhes = a.tipoMov === 'entrada'
-            ? `NF: ${a.nota} | Forn: ${a.fornecedor} | Mot: ${a.motorista}`
-            : (a.destino === 'obra'
-                ? `Obra: ${a.servico} (Est. ${a.estacaIni} a ${a.estacaFim})`
-                : `Sub: ${a.subempreiteira} | Dest: ${a.destinoFinal}`);
-        const tipoLabel = a.tipoMov === 'entrada'
-            ? '<span style="color:green; font-weight:bold;">Entrada</span>'
-            : '<span style="color:red; font-weight:bold;">Saída</span>';
-        const unidade = 'Ton';
-        const acoes = isAdmin ? `
-  <td style="text-align:center; white-space:nowrap;">
-    <button class="btn btn-sm btn-outline" style="padding:3px 6px; border-color:#001C54; color:#001C54; display:inline-flex;" onclick="editarAgregado('${a.id}')" title="Editar">✏️</button>
-    <button class="btn btn-sm btn-outline" style="padding:3px 6px; border-color:#d32f2f; color:#d32f2f; display:inline-flex;" onclick="deletarAgregado('${a.id}')" title="Excluir">🗑️</button>
-  </td>` : '<td>-</td>';
 
-tr.innerHTML = `
-  <td>${dataFormatada}</td>
-  <td>${tipoLabel}</td>
-  <td>${a.material}</td>
-  <td>${a.caminhao}</td>
-  <td>${(a.qtd || 0).toFixed(2)} ${unidade}</td>
-  <td>${detalhes}</td>
-  ${acoes}
-`;
-        tbody.appendChild(tr);
-    });
-}
-window.deletarAgregado = async function(id) {
-    if (!isAdmin) return;
-    if (!confirm("Tem certeza que deseja EXCLUIR este lançamento? Os KPIs serão recalculados.")) return;
-    try {
-        await window.deleteDoc(window.doc(window.db, "agregados", id));
-    } catch (error) {
-        console.error("Erro ao excluir agregado:", error);
-        alert("Erro ao excluir.");
-    }
-};
-
-window.editarAgregado = function(id) {
-    if (!isAdmin) return;
-    const a = dbAgregados.find(x => x.id === id);
-    if (!a) return alert("Lançamento não encontrado.");
-
-    if (a.tipoMov === 'entrada') {
-        document.getElementById('agr-ent-data').value = a.data || '';
-        document.getElementById('agr-ent-tipo').value = a.material || 'Brita 1';
-        document.getElementById('agr-ent-caminhao').value = a.caminhao || '';
-        document.getElementById('agr-ent-qtd').value = a.qtd || '';
-        document.getElementById('agr-ent-valor').value = a.valor || '';
-        document.getElementById('agr-ent-nota').value = a.nota || '';
-        document.getElementById('agr-ent-fornecedor').value = a.fornecedor || '';
-        document.getElementById('agr-ent-motorista').value = a.motorista || '';
-        document.getElementById('agr-ent-transportador').value = a.transportador || '';
-        document.getElementById('agr-ent-local').value = a.local || '';
-        document.getElementById('form-agr-entrada').dataset.editId = id;
-        document.getElementById('modal-agr-entrada').style.display = 'flex';
-    } else {
-        document.getElementById('agr-sai-data').value = a.data || '';
-        document.getElementById('agr-sai-tipo').value = a.material || 'Brita 1';
-        document.getElementById('agr-sai-caminhao').value = a.caminhao || '';
-        document.getElementById('agr-sai-carradas').value = a.carradas || '';
-        document.getElementById('agr-sai-capacidade').value = a.capacidade || 12;
-        document.getElementById('agr-sai-transportador').value = a.transportador || '';
-        document.getElementById('agr-sai-local').value = a.local || '';
-        document.getElementById('agr-sai-destino').value = a.destino || 'obra';
-        document.getElementById('agr-sai-destino').dispatchEvent(new Event('change'));
-        if (a.destino === 'obra') {
-            document.getElementById('agr-sai-servico').value = a.servico || '';
-            document.getElementById('agr-sai-estaca-ini').value = a.estacaIni || '';
-            document.getElementById('agr-sai-estaca-fim').value = a.estacaFim || '';
-        } else {
-            document.getElementById('agr-sai-nome-sub').value = a.subempreiteira || '';
-            document.getElementById('agr-sai-destino-final').value = a.destinoFinal || '';
+        function renderTabelaAgregados() {
+            const tbody = document.querySelector('#tabela-agregados tbody'); tbody.innerHTML = '';
+            let filtrados = dbAgregados.filter(a => {
+                if (filtroAgrMaterial !== 'todos' && a.material !== filtroAgrMaterial) return false;
+                if (filtroAgrTipo !== 'todos') {
+                    if (filtroAgrTipo === 'entrada' && a.tipoMov !== 'entrada') return false;
+                    if (filtroAgrTipo === 'saida_obra' && (a.tipoMov !== 'saida' || a.destino !== 'obra')) return false;
+                    if (filtroAgrTipo === 'saida_sub' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira')) return false;
+                }
+                if (filtroAgrSub !== '' && a.tipoMov === 'saida' && a.destino === 'subempreiteira') { if (!(a.subempreiteira || '').toLowerCase().includes(filtroAgrSub)) return false; } 
+                else if (filtroAgrSub !== '' && (a.tipoMov === 'entrada' || a.destino !== 'subempreiteira')) { return false; }
+                if (!registroBateFiltroData(a)) return false;
+                return true;
+            });
+            filtrados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            filtrados.forEach(a => {
+                const tr = document.createElement('tr');
+                const dataFormatada = a.data ? a.data.split('-').reverse().join('/') : '-';
+                let detalhes = a.tipoMov === 'entrada' ? `NF: ${a.nota} | Forn: ${a.fornecedor} | Mot: ${a.motorista}` : (a.destino === 'obra' ? `Obra: ${a.servico} (Est. ${a.estacaIni} a ${a.estacaFim})` : `Sub: ${a.subempreiteira} | Dest: ${a.destinoFinal}`);
+                const tipoLabel = a.tipoMov === 'entrada' ? '<span style="color:green; font-weight:bold;">Entrada</span>' : '<span style="color:red; font-weight:bold;">Saída</span>';
+                const unidade = 'Ton';
+                const acoes = isAdmin ? `<td style="text-align:center; white-space:nowrap;"><button class="btn btn-sm btn-outline" style="padding:3px 6px; border-color:#001C54; color:#001C54; display:inline-flex;" onclick="editarAgregado('${a.id}')" title="Editar">✏️</button><button class="btn btn-sm btn-outline" style="padding:3px 6px; border-color:#d32f2f; color:#d32f2f; display:inline-flex;" onclick="deletarAgregado('${a.id}')" title="Excluir">🗑️</button></td>` : '<td>-</td>';
+                tr.innerHTML = `<td>${dataFormatada}</td><td>${tipoLabel}</td><td>${a.material}</td><td>${a.caminhao}</td><td>${(a.qtd || 0).toFixed(2)} ${unidade}</td><td>${detalhes}</td>${acoes}`;
+                tbody.appendChild(tr);
+            });
         }
-        document.getElementById('form-agr-saida').dataset.editId = id;
-        document.getElementById('modal-agr-saida').style.display = 'flex';
-    }
-};
+
+        window.deletarAgregado = async function(id) {
+            if (!isAdmin) return;
+            if (!confirm("Tem certeza que deseja EXCLUIR este lançamento? Os KPIs serão recalculados.")) return;
+            try { await window.deleteDoc(window.doc(window.db, "agregados", id)); } catch (error) { console.error("Erro ao excluir agregado:", error); alert("Erro ao excluir."); }
+        };
+
+        window.editarAgregado = function(id) {
+            if (!isAdmin) return;
+            const a = dbAgregados.find(x => x.id === id);
+            if (!a) return alert("Lançamento não encontrado.");
+
+            if (a.tipoMov === 'entrada') {
+                document.getElementById('agr-ent-data').value = a.data || '';
+                document.getElementById('agr-ent-tipo').value = a.material || 'Brita 1';
+                document.getElementById('agr-ent-caminhao').value = a.caminhao || '';
+                document.getElementById('agr-ent-qtd').value = a.qtd || '';
+                document.getElementById('agr-ent-valor').value = a.valor || '';
+                document.getElementById('agr-ent-nota').value = a.nota || '';
+                document.getElementById('agr-ent-fornecedor').value = a.fornecedor || '';
+                document.getElementById('agr-ent-motorista').value = a.motorista || '';
+                document.getElementById('agr-ent-transportador').value = a.transportador || '';
+                document.getElementById('agr-ent-local').value = a.local || '';
+                document.getElementById('form-agr-entrada').dataset.editId = id;
+                document.getElementById('modal-agr-entrada').style.display = 'flex';
+            } else {
+                document.getElementById('agr-sai-data').value = a.data || '';
+                document.getElementById('agr-sai-tipo').value = a.material || 'Brita 1';
+                document.getElementById('agr-sai-caminhao').value = a.caminhao || '';
+                document.getElementById('agr-sai-carradas').value = a.carradas || '';
+                document.getElementById('agr-sai-capacidade').value = a.capacidade || 12;
+                document.getElementById('agr-sai-transportador').value = a.transportador || '';
+                document.getElementById('agr-sai-local').value = a.local || '';
+                document.getElementById('agr-sai-destino').value = a.destino || 'obra';
+                document.getElementById('agr-sai-destino').dispatchEvent(new Event('change'));
+                if (a.destino === 'obra') {
+                    document.getElementById('agr-sai-servico').value = a.servico || '';
+                    document.getElementById('agr-sai-estaca-ini').value = a.estacaIni || '';
+                    document.getElementById('agr-sai-estaca-fim').value = a.estacaFim || '';
+                } else {
+                    document.getElementById('agr-sai-nome-sub').value = a.subempreiteira || '';
+                    document.getElementById('agr-sai-destino-final').value = a.destinoFinal || '';
+                }
+                document.getElementById('form-agr-saida').dataset.editId = id;
+                document.getElementById('modal-agr-saida').style.display = 'flex';
+            }
+        };
+
         function gerarRelatorioPDF() {
             const container = document.createElement('div'); container.style.padding = '20px'; container.style.fontFamily = 'Arial, sans-serif'; container.style.color = '#333'; container.style.backgroundColor = '#fff';
             let totalRR2C = 0; let totalEIA = 0; let tanquesHtml = '';
@@ -2820,17 +2429,17 @@ window.editarAgregado = function(id) {
 
         function gerarRelatorioAgregadosPDF() {
             const filtrados = dbAgregados.filter(a => {
-    if (filtroAgrMaterial !== 'todos' && a.material !== filtroAgrMaterial) return false;
-    if (filtroAgrTipo === 'entrada' && a.tipoMov !== 'entrada') return false;
-    if (filtroAgrTipo === 'saida_obra' && (a.tipoMov !== 'saida' || a.destino !== 'obra')) return false;
-    if (filtroAgrTipo === 'saida_sub' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira')) return false;
-    if (filtroAgrSub !== '' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira' || !(a.subempreiteira || '').toLowerCase().includes(filtroAgrSub))) return false;
-    if (!registroBateFiltroData(a)) return false;
-    return true;
-}).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                if (filtroAgrMaterial !== 'todos' && a.material !== filtroAgrMaterial) return false;
+                if (filtroAgrTipo === 'entrada' && a.tipoMov !== 'entrada') return false;
+                if (filtroAgrTipo === 'saida_obra' && (a.tipoMov !== 'saida' || a.destino !== 'obra')) return false;
+                if (filtroAgrTipo === 'saida_sub' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira')) return false;
+                if (filtroAgrSub !== '' && (a.tipoMov !== 'saida' || a.destino !== 'subempreiteira' || !(a.subempreiteira || '').toLowerCase().includes(filtroAgrSub))) return false;
+                if (!registroBateFiltroData(a)) return false;
+                return true;
+            }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             if (filtrados.length === 0) return alert("Não há dados para gerar o relatório com os filtros atuais.");
             const container = document.createElement('div'); container.style.padding = '20px'; container.style.fontFamily = 'Arial, sans-serif'; container.style.color = '#333'; container.style.backgroundColor = '#fff';
-            const escapar = valor => String(valor ?? '-').replace(/[&<>"']/g, caractere => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[caractere]));
+                       const escapar = valor => String(valor ?? '-').replace(/[&<>"']/g, caractere => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[caractere]));
             const estiloCelula = 'border: 1px solid #ccc; padding: 5px; font-size: 10px; word-wrap: break-word; overflow-wrap: anywhere; max-width: 95px;';
             const colunas = ['Data', 'Tipo (Entrada/Saída)', 'Material', 'Qtd (t)', 'Caminhão', 'Transportador', 'Local Armaz.', 'Destino/NF', 'Responsável'];
             const tableHtml = filtrados.map(a => {
@@ -2853,10 +2462,7 @@ window.editarAgregado = function(id) {
         let midiaTimeout = null;
 
         function initMidia() {
-            // Mostrar/ocultar campo de duração conforme o tipo
-            document.getElementById('media-tipo').addEventListener('change', (e) => {
-                document.getElementById('grupo-duracao').style.display = (e.target.value === 'video') ? 'block' : 'none';
-            });
+            document.getElementById('media-tipo').addEventListener('change', (e) => { document.getElementById('grupo-duracao').style.display = (e.target.value === 'video') ? 'block' : 'none'; });
 
             document.getElementById('form-add-midia').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -2870,22 +2476,13 @@ window.editarAgregado = function(id) {
                     return alert("Para imagens, o Google Drive não serve link direto.\n\nUse um link direto de imagem (ex: i.postimg.cc, lh3.googleusercontent.com, etc.) ou escolha a opção 'Vídeo' se for um vídeo do Drive.");
                 }
 
-                // Se duração inválida/vazia, salva null (modo manual)
                 if (isNaN(duracao) || duracao <= 0) duracao = null;
 
                 try {
-                    await window.addDoc(window.collection(window.db, "apresentacao"), {
-                        url: url,
-                        tipo: tipo,
-                        duracao: duracao,
-                        timestamp: new Date()
-                    });
+                    await window.addDoc(window.collection(window.db, "apresentacao"), { url: url, tipo: tipo, duracao: duracao, timestamp: new Date() });
                     document.getElementById('form-add-midia').reset();
                     document.getElementById('grupo-duracao').style.display = 'none';
-                } catch (error) {
-                    console.error("Erro ao adicionar mídia:", error);
-                    alert("Erro ao salvar na nuvem.");
-                }
+                } catch (error) { console.error("Erro ao adicionar mídia:", error); alert("Erro ao salvar na nuvem."); }
             });
 
             document.getElementById('btn-iniciar-apresentacao').addEventListener('click', () => {
@@ -2902,7 +2499,6 @@ window.editarAgregado = function(id) {
 
         function escutarMidias() {
             if (!window.firebaseReady) { setTimeout(escutarMidias, 500); return; }
-            
             const q = window.query(window.collection(window.db, "apresentacao"), window.orderBy("timestamp", "asc"));
             window.onSnapshot(q, (snapshot) => {
                 dbMidia = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -2911,135 +2507,209 @@ window.editarAgregado = function(id) {
         }
 
         function renderizarGaleriaMidia() {
-            const grid = document.getElementById('media-grid');
-            grid.innerHTML = '';
-
-            if (dbMidia.length === 0) {
-                grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">Nenhuma mídia na playlist.</div>';
-                return;
-            }
+            const grid = document.getElementById('media-grid'); grid.innerHTML = '';
+            if (dbMidia.length === 0) { grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">Nenhuma mídia na playlist.</div>'; return; }
 
             dbMidia.forEach(m => {
-                const card = document.createElement('div');
-                card.className = 'media-card';
-                
+                const card = document.createElement('div'); card.className = 'media-card';
                 let previewHtml = '';
                 if (m.tipo === 'video') {
                     const videoId = m.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
                     const embedUrl = videoId ? `https://drive.google.com/file/d/${videoId[1]}/preview` : m.url;
                     previewHtml = `<iframe src="${embedUrl}" class="media-preview" allow="autoplay" style="pointer-events: none;"></iframe>`;
-                } else {
-                    previewHtml = `<img src="${m.url}" class="media-preview" alt="Imagem">`;
-                }
-
-                const duracaoTexto = (m.tipo === 'video')
-                    ? (m.duracao ? `⏱️ ${m.duracao}s` : '🖐️ Manual')
-                    : '5s';
-
-                card.innerHTML = `
-                    ${previewHtml}
-                    <div class="media-info">
-                        <span>${m.tipo === 'video' ? 'Vídeo' : 'Imagem'}</span>
-                        <span style="font-size:0.75rem; color:#666;">${duracaoTexto}</span>
-                        ${isAdmin ? `<button class="btn-delete-media" onclick="deletarMidia('${m.id}')">🗑️</button>` : ''}
-                    </div>
-                `;
+                } else { previewHtml = `<img src="${m.url}" class="media-preview" alt="Imagem">`; }
+                const duracaoTexto = (m.tipo === 'video') ? (m.duracao ? `⏱️ ${m.duracao}s` : '🖐️ Manual') : '5s';
+                card.innerHTML = `${previewHtml}<div class="media-info"><span>${m.tipo === 'video' ? 'Vídeo' : 'Imagem'}</span><span style="font-size:0.75rem; color:#666;">${duracaoTexto}</span>${isAdmin ? `<button class="btn-delete-media" onclick="deletarMidia('${m.id}')">🗑️</button>` : ''}</div>`;
                 grid.appendChild(card);
             });
         }
 
         window.deletarMidia = async function(id) {
             if (!isAdmin) return;
-            if (confirm("Excluir esta mídia da playlist?")) {
-                try {
-                    await window.deleteDoc(window.doc(window.db, "apresentacao", id));
-                } catch (error) {
-                    console.error("Erro ao deletar:", error);
-                }
-            }
+            if (confirm("Excluir esta mídia da playlist?")) { try { await window.deleteDoc(window.doc(window.db, "apresentacao", id)); } catch (error) { console.error("Erro ao deletar:", error); } }
         };
 
-        function iniciarPlayer() {
-            isPlaying = true;
-            midiaAtualIndex = 0;
-            document.getElementById('fullscreen-player').classList.add('active');
-            reproduzirMidiaAtual();
-        }
-
-        function pararPlayer() {
-            isPlaying = false;
-            document.getElementById('fullscreen-player').classList.remove('active');
-            if (midiaTimeout) clearTimeout(midiaTimeout);
-            const content = document.getElementById('player-content');
-            content.innerHTML = ''; 
-        }
+        function iniciarPlayer() { isPlaying = true; midiaAtualIndex = 0; document.getElementById('fullscreen-player').classList.add('active'); reproduzirMidiaAtual(); }
+        function pararPlayer() { isPlaying = false; document.getElementById('fullscreen-player').classList.remove('active'); if (midiaTimeout) clearTimeout(midiaTimeout); document.getElementById('player-content').innerHTML = ''; }
 
         function reproduzirMidiaAtual() {
             if (!isPlaying || dbMidia.length === 0) return;
-
-            const content = document.getElementById('player-content');
-            const midia = dbMidia[midiaAtualIndex];
-            
+            const content = document.getElementById('player-content'); const midia = dbMidia[midiaAtualIndex];
             content.innerHTML = '';
-
             if (midia.tipo === 'video') {
                 const videoId = midia.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
                 if (videoId) {
-                    const iframe = document.createElement('iframe');
-                    iframe.src = `https://drive.google.com/file/d/${videoId[1]}/preview`;
-                    iframe.width = "100%";
-                    iframe.height = "100%";
-                    iframe.allow = "autoplay";
-                    iframe.style.border = "none";
-                    content.appendChild(iframe);
-
-                    // Se duração cadastrada, avança sozinho
-                    if (midia.duracao && midia.duracao > 0) {
-                        midiaTimeout = setTimeout(proximaMidia, midia.duracao * 1000);
-                    } else {
-                        // Modo manual: aguarda o operador clicar "Próximo ▶"
-                        midiaTimeout = null;
-                    }
-                } else {
-                    proximaMidia();
-                }
+                    const iframe = document.createElement('iframe'); iframe.src = `https://drive.google.com/file/d/${videoId[1]}/preview`;
+                    iframe.width = "100%"; iframe.height = "100%"; iframe.allow = "autoplay"; iframe.style.border = "none"; content.appendChild(iframe);
+                    if (midia.duracao && midia.duracao > 0) { midiaTimeout = setTimeout(proximaMidia, midia.duracao * 1000); } else { midiaTimeout = null; }
+                } else { proximaMidia(); }
             } else {
-                const img = document.createElement('img');
-                img.src = midia.url;
-                img.style.maxWidth = '100%';
-                img.style.maxHeight = '100%';
-                img.style.objectFit = 'contain';
-                content.appendChild(img);
-
+                const img = document.createElement('img'); img.src = midia.url; img.style.maxWidth = '100%'; img.style.maxHeight = '100%'; img.style.objectFit = 'contain'; content.appendChild(img);
                 midiaTimeout = setTimeout(proximaMidia, 5000);
             }
         }
 
-        function proximaMidia() {
-            if (!isPlaying) return;
-            if (midiaTimeout) clearTimeout(midiaTimeout);
-            midiaAtualIndex++;
-            if (midiaAtualIndex >= dbMidia.length) {
-                midiaAtualIndex = 0; // loop infinito
+        function proximaMidia() { if (!isPlaying) return; if (midiaTimeout) clearTimeout(midiaTimeout); midiaAtualIndex++; if (midiaAtualIndex >= dbMidia.length) { midiaAtualIndex = 0; } reproduzirMidiaAtual(); }
+        function midiaAnterior() { if (!isPlaying) return; if (midiaTimeout) clearTimeout(midiaTimeout); midiaAtualIndex--; if (midiaAtualIndex < 0) { midiaAtualIndex = dbMidia.length - 1; } reproduzirMidiaAtual(); }
+
+        // =========================================
+        // INTELIGÊNCIA E ATUAÇÃO DO DR. RICARDO
+        // =========================================
+        let mascoteTimeout = null;
+
+        function exibirMascote(mensagem, tipo = 'info') {
+            const container = document.getElementById('mascote-container');
+            const balao = document.getElementById('mascote-balao');
+            const texto = document.getElementById('mascote-texto');
+            const img = document.getElementById('mascote-img');
+            
+            if (mascoteTimeout) clearTimeout(mascoteTimeout);
+            container.classList.remove('saindo');
+            
+            // 1. Reset Inicial: Ele entra na tela na pose neutra, balão escondido
+            img.className = 'mascote-personagem pose-neutra';
+            balao.style.display = 'none';
+            container.style.display = 'flex';
+            texto.innerHTML = mensagem;
+
+            if (tipo === 'danger') {
+                balao.style.borderLeftColor = '#d32f2f'; balao.style.backgroundColor = '#ffebee';
+            } else if (tipo === 'warning') {
+                balao.style.borderLeftColor = '#FFC000'; balao.style.backgroundColor = '#fff8e1';
+            } else if (tipo === 'success') {
+                balao.style.borderLeftColor = '#4CAF50'; balao.style.backgroundColor = '#e8f5e9';
+            } else {
+                balao.style.borderLeftColor = '#2196F3'; balao.style.backgroundColor = '#e3f2fd';
             }
-            reproduzirMidiaAtual();
+
+            // 2. A ATUAÇÃO
+            setTimeout(() => { img.className = 'mascote-personagem pose-pensando'; }, 500);
+
+            setTimeout(() => {
+                if (tipo === 'danger') img.className = 'mascote-personagem pose-megafone';
+                else if (tipo === 'warning') img.className = 'mascote-personagem pose-placa';
+                else if (tipo === 'success') img.className = 'mascote-personagem pose-comemorando1';
+                else img.className = 'mascote-personagem pose-apontando';
+            }, 1500);
+
+            setTimeout(() => {
+                if (tipo === 'danger') img.className = 'mascote-personagem pose-alerta-dedo';
+                else if (tipo === 'warning') img.className = 'mascote-personagem pose-apontando'; 
+                else if (tipo === 'success') img.className = 'mascote-personagem pose-comemorando2';
+                balao.style.display = 'block';
+            }, 2500);
+            
+            mascoteTimeout = setTimeout(() => {
+                container.classList.add('saindo');
+                setTimeout(() => { container.style.display = 'none'; }, 500);
+            }, 10000);
         }
 
-        function midiaAnterior() {
-            if (!isPlaying) return;
-            if (midiaTimeout) clearTimeout(midiaTimeout);
-            midiaAtualIndex--;
-            if (midiaAtualIndex < 0) {
-                midiaAtualIndex = dbMidia.length - 1; // loop infinito
+        function avaliarSistemaParaAlertas() {
+            const alertas = [];
+            const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const hoje = new Date();
+            const mesAtualReal = hoje.getMonth() + 1;
+            const anoAtualReal = hoje.getFullYear();
+            const diaAtual = hoje.getDate();
+
+            // 1. TANQUES
+            let totalRR2C = 0; let totalEIA = 0;
+            let capacidadeTotalRR2C = 0; let capacidadeTotalEIA = 0;
+
+            dbTanques.forEach(t => {
+                if (t.material === 'RR-2C') { totalRR2C += (t.volumeAtual || 0); capacidadeTotalRR2C += (t.capacidadeTotal || 0); }
+                if (t.material === 'EIA') { totalEIA += (t.volumeAtual || 0); capacidadeTotalEIA += (t.capacidadeTotal || 0); }
+            });
+
+            if (dbTanques.length > 0) {
+                if (totalRR2C < 5000) alertas.push({ msg: `Macho, o estoque de RR-2C está muito baixo (${totalRR2C.toLocaleString('pt-BR', {maximumFractionDigits:0})} L). Já pediram mais?`, tipo: 'danger' });
+                else if (capacidadeTotalRR2C > 0 && totalRR2C < (capacidadeTotalRR2C * 0.3)) alertas.push({ msg: `Macho, o RR-2C tá abaixo de 30% da capacidade dos tanques. Se começar a aplicar base, vai faltar material!`, tipo: 'warning' });
+
+                if (totalEIA < 5000) alertas.push({ msg: `Macho, o estoque de EIA tá no osso (${totalEIA.toLocaleString('pt-BR', {maximumFractionDigits:0})} L). Aciona o fornecedor logo antes que a equipe pare.`, tipo: 'danger' });
+                else if (capacidadeTotalEIA > 0 && totalEIA < (capacidadeTotalEIA * 0.3)) alertas.push({ msg: `Macho, a reserva de EIA tá baixa. Vê se o laboratório já aprovou o último lote que chegou.`, tipo: 'warning' });
             }
-            reproduzirMidiaAtual();
+
+            // 2. AGREGADOS
+            let estoqueBrita0 = 0; let estoqueBrita1 = 0; let estoqueBGS = 0; let estoquePo = 0;
+            dbAgregados.forEach(a => {
+                const qtd = a.qtd || 0;
+                if (a.material === 'Brita 0') estoqueBrita0 += (a.tipoMov === 'entrada') ? qtd : -qtd;
+                if (a.material === 'Brita 1') estoqueBrita1 += (a.tipoMov === 'entrada') ? qtd : -qtd;
+                if (a.material === 'BGS') estoqueBGS += (a.tipoMov === 'entrada') ? qtd : -qtd;
+                if (a.material === 'Pó de Brita') estoquePo += (a.tipoMov === 'entrada') ? qtd : -qtd;
+            });
+            
+            if (estoqueBrita0 < 0) alertas.push({ msg: `Macho, a Brita 0 tá negativa (${estoqueBrita0.toFixed(1)} t). Ou o caminhão descarregou e ninguém lançou a entrada, ou tá tendo desvio. Confere aí!`, tipo: 'danger' });
+            else if (estoqueBrita0 > 0 && estoqueBrita0 < 50) alertas.push({ msg: `Macho, a Brita 0 tá com estoque de emergência (${estoqueBrita0.toFixed(1)} t). Bomba pra imprimir a TSD.`, tipo: 'warning' });
+            
+            if (estoqueBrita1 < 0) alertas.push({ msg: `Macho, a Brita 1 tá no vermelho (${estoqueBrita1.toFixed(1)} t). Dá uma olhada no livro de saídas.`, tipo: 'danger' });
+            else if (estoqueBrita1 > 0 && estoqueBrita1 < 50) alertas.push({ msg: `Macho, a Brita 1 tá acabando (${estoqueBrita1.toFixed(1)} t). Se não repor, a usina para.`, tipo: 'warning' });
+
+            if (estoqueBGS < 0) alertas.push({ msg: `Macho, o BGS tá negativo. Alguém lançou saída sem ter entrada de nota.`, tipo: 'danger' });
+            if (estoquePo < 0) alertas.push({ msg: `Macho, o Pó de Brita tá negativo. Tem lançamento errado aí.`, tipo: 'danger' });
+
+            // 3. PRODUÇÃO E METAS
+            const producaoMesAtual = dbProducao.filter(d => {
+                if (!d.data) return false;
+                const [ano, mes] = d.data.split('-');
+                return parseInt(ano) === anoAtualReal && parseInt(mes) === mesAtualReal;
+            }).reduce((acc, curr) => acc + (curr.volume || 0), 0);
+
+            const metaDoMes = getMetaMes(mesAtualReal, anoAtualReal);
+            
+            if (producaoMesAtual > 0 && diaAtual > 15) {
+                if (producaoMesAtual < (metaDoMes * 0.5)) alertas.push({ msg: `Macho, já passamos do dia 15 e a produção tá em ${producaoMesAtual.toLocaleString('pt-BR')} m³. Tá muito abaixo da meta (${metaDoMes.toLocaleString('pt-BR')} m³). Tem que acelerar o carregamento!`, tipo: 'danger' });
+                else if (producaoMesAtual >= metaDoMes) alertas.push({ msg: `Macho, batemos a meta do mês! ${producaoMesAtual.toLocaleString('pt-BR')} m³ lançados. Excelente trabalho da equipe de campo!`, tipo: 'success' });
+            }
+
+            // 4. HORAS (CONTROLE EH)
+            let totalHorasNoMes = 0;
+            dbControleEH.forEach(r => {
+                if (!r.data) return;
+                const [ano, mes] = r.data.split('-');
+                if (parseInt(ano) === anoAtualReal && parseInt(mes) === mesAtualReal) {
+                    if (r.servicos) {
+                        r.servicos.forEach(s => {
+                            if (s.tipo === 'Carregamento') {
+                                const [hIni, mIni] = s.ini.split(':').map(Number);
+                                const [hFim, mFim] = s.fim.split(':').map(Number);
+                                let diff = (hFim * 60 + mFim) - (hIni * 60 + mIni);
+                                if (diff < 0) diff += 24 * 60;
+                                totalHorasNoMes += diff / 60;
+                            }
+                        });
+                    }
+                }
+            });
+
+            if (producaoMesAtual > 0 && totalHorasNoMes === 0) alertas.push({ msg: `Macho, tem ${producaoMesAtual.toLocaleString('pt-BR')} m³ de produção lançada, mas zero horas de carregamento no PDE! A produtividade tá zerada e a diretoria vai cobrar.`, tipo: 'warning' });
+            else if (producaoMesAtual > 0 && (producaoMesAtual / totalHorasNoMes) < 300) alertas.push({ msg: `Macho, a produtividade média tá em ${(producaoMesAtual / totalHorasNoMes).toFixed(0)} m³/h. Tá baixa demais. Vê se a escavadeira tá parada demais pra manutenção.`, tipo: 'warning' });
+
+            // 5. MENSAGENS DE SUCESSO
+            const mensagensSucesso = [
+                "Macho, os tanques estão cheios e a produção em dia. Tá tranquilo, pode tocar o serviço!",
+                "Macho, a equipe tá de parabéns. Os lançamentos estão em dia e a produtividade tá excelente!",
+                "Macho, o estoque tá saudável e a meta tá no papo. Continue assim que a obra anda.",
+                "Macho, tá tudo certo por aqui. Nenhuma inconsistência nos agregados e o diário tá atualizado. Bom trabalho!"
+            ];
+
+            if (alertas.length > 0) {
+                const alertaSorteado = alertas[Math.floor(Math.random() * alertas.length)];
+                exibirMascote(alertaSorteado.msg, alertaSorteado.tipo);
+            } else {
+                if (Math.random() < 0.3) {
+                    const msgSucesso = mensagensSucesso[Math.floor(Math.random() * mensagensSucesso.length)];
+                    exibirMascote(msgSucesso, 'success');
+                }
+            }
         }
-    </script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/Sistema-Edeconsil/sw.js');
-        }
+
+        // Inicializa o Dr. Ricardo
+        window.addEventListener('firebaseLoaded', () => {
+            setTimeout(avaliarSistemaParaAlertas, 4000);
+        });
+        setInterval(avaliarSistemaParaAlertas, 5 * 60 * 1000); 
     </script>
 </body>
 </html>
-
