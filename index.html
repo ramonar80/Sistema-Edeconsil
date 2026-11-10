@@ -1802,11 +1802,11 @@
             };
 
             html2pdf().set(opt).from(printContainer).save().then(() => {
-                printContainer.style.display = 'none';
-                printContainer.innerHTML = '';
-                alert("Relatório gerado com sucesso! As fotos utilizadas não serão repetidas nos próximos.");
-            });
-        }
+        printContainer.style.display = 'none';
+        printContainer.innerHTML = '';
+        alert("Relatório gerado com sucesso! As fotos utilizadas não serão repetidas nos próximos.");
+    });
+}
 
         function criarPaginaPDF(tituloItem, fotos, mesNome, ano) {
             // Cria pares de fotos para ficar 2 por linha (igual ao PDF)
