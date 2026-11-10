@@ -1808,15 +1808,13 @@
     });
 }
 
-        function criarPaginaPDF(tituloItem, fotos, mesNome, ano) {
-            // Cria pares de fotos para ficar 2 por linha (igual ao PDF)
+               function criarPaginaPDF(tituloItem, fotos, mesNome, ano) {
             let gridHtml = '';
             for (let i = 0; i < fotos.length; i += 2) {
                 gridHtml += `<div class="pdf-grid" style="margin-bottom: 5px;">`;
                 for (let j = 0; j < 2; j++) {
                     if (fotos[i + j]) {
                         const f = fotos[i + j];
-                        // Pega a data da foto no formato do PDF (ex: 22M 814748 9366920)
                         const dataStr = f.reg.dateStr.split('-').reverse().join('/');
                         const textoInfo = `${dataStr} - TO-010 Araputanga<br>${f.reg.serviceType}`;
                         
@@ -1828,7 +1826,7 @@
                             </div>
                         `;
                     } else {
-                        gridHtml += `<div></div>`; // espaço vazio se for ímpar
+                        gridHtml += `<div></div>`;
                     }
                 }
                 gridHtml += `</div>`;
@@ -1836,7 +1834,6 @@
 
             return `
                 <div class="pdf-report-page pdf-page-break">
-                    <!-- Cabeçalho igual ao seu PDF -->
                     <div class="pdf-header">
                         <img src="https://i.postimg.cc/dVf8bLHk/logo-Edeconsil.jpg" alt="Edeconsil">
                         <div class="pdf-header-mid">
@@ -1848,7 +1845,6 @@
                         RELATÓRIO FOTOGRÁFICO TO/010 - ${mesNome} DE ${ano}
                     </div>
                     
-                    <!-- Grid de Fotos -->
                     ${gridHtml}
                 </div>
             `;
@@ -2541,8 +2537,7 @@
                 }
             });
 
-            document.getElementById('filtro-agr-material').addEventListener('change', (e) => { filtroAgrMaterial = e.target.value; renderTabelaAgregados();
-            
+            document.getElementById('filtro-agr-material').addEventListener('change', (e) => { filtroAgrMaterial = e.target.value; renderTabelaAgregados(); });
             document.getElementById('filtro-agr-tipo').addEventListener('change', (e) => { filtroAgrTipo = e.target.value; renderTabelaAgregados(); });
             document.getElementById('filtro-agr-sub').addEventListener('input', (e) => { filtroAgrSub = e.target.value.toLowerCase(); renderTabelaAgregados(); });
             document.getElementById('filtro-agr-ano').addEventListener('change', (e) => { filtroAgrAno = e.target.value; filtroAgrDia = 'todos'; document.getElementById('filtro-agr-dia').value = 'todos'; popularDiasAgregados(); renderTabelaAgregados(); renderAgregados(); });
