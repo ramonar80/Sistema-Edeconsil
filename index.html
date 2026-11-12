@@ -13,7 +13,7 @@
     <!-- FIREBASE CONFIG -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, enableIndexedDbPersistence, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, enableIndexedDbPersistence, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -1708,106 +1708,128 @@
         }
 
         async function gerarRelatorioFotografico() {
-            if (!window.firebaseReady) return alert("Aguarde a conexão com a nuvem.");
-            
-            const mes = document.getElementById('rel-mes').value;
-            const ano = document.getElementById('rel-ano').value;
-            const mesesNomes = ['', 'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
-            
-            const configItens = [
-                { id: 'ITEM 01 - SERVIÇOS PREELIMINARES', qtd: parseInt(document.getElementById('qtd-item-01').value) || 0 },
-                { id: 'ITEM 02 - TERRAPLENAGEM', qtd: parseInt(document.getElementById('qtd-item-02').value) || 0 },
-                { id: 'ITEM 03 - DRENAGEM', qtd: parseInt(document.getElementById('qtd-item-03').value) || 0 },
-                { id: 'ITEM 04 - PAVIMENTAÇÃO', qtd: parseInt(document.getElementById('qtd-item-04').value) || 0 },
-                { id: 'ITEM 05 - SINALIZAÇÃO', qtd: parseInt(document.getElementById('qtd-item-05').value) || 0 },
-                { id: 'ITEM 06 - OBRAS COMPLEMENTARES', qtd: parseInt(document.getElementById('qtd-item-06').value) || 0 }
-            ];
+    if (!window.firebaseReady) return alert("Aguarde a conexão com a nuvem.");
+    if (typeof html2pdf === 'undefined') return alert("Biblioteca de PDF não carregou. Verifique a conexão e recarregue a página.");
+    if (typeof window.getDocs !== 'function') return alert("Erro interno: getDocs não disponível. Recarregue a página.");
 
-            // Busca todos os registros do Firebase
-            const snapshot = await window.getDocs(window.collection(window.db, "diario"));
-            let todosRegistros = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const btnSubmit = document.querySelector('#form-relatorio button[type="submit"]');
+    const textoOriginal = btnSubmit ? btnSubmit.innerText : '';
+    if (btnSubmit) { btnSubmit.innerText = 'Gerando...'; btnSubmit.disabled = true; }
 
-            // Filtra pelo mês e ano escolhidos
-            todosRegistros = todosRegistros.filter(reg => {
-                if (!reg.dateStr) return false;
-                const [rAno, rMes] = reg.dateStr.split('-');
-                return parseInt(rAno) === parseInt(ano) && parseInt(rMes) === parseInt(mes);
+    try {
+        const mes = document.getElementById('rel-mes').value;
+        const ano = document.getElementById('rel-ano').value;
+        const mesesNomes = ['', 'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+
+        const configItens = [
+            { id: 'ITEM 01 - SERVIÇOS PREELIMINARES', qtd: parseInt(document.getElementById('qtd-item-01').value) || 0 },
+            { id: 'ITEM 02 - TERRAPLENAGEM', qtd: parseInt(document.getElementById('qtd-item-02').value) || 0 },
+            { id: 'ITEM 03 - DRENAGEM', qtd: parseInt(document.getElementById('qtd-item-03').value) || 0 },
+            { id: 'ITEM 04 - PAVIMENTAÇÃO', qtd: parseInt(document.getElementById('qtd-item-04').value) || 0 },
+            { id: 'ITEM 05 - SINALIZAÇÃO', qtd: parseInt(document.getElementById('qtd-item-05').value) || 0 },
+            { id: 'ITEM 06 - OBRAS COMPLEMENTARES', qtd: parseInt(document.getElementById('qtd-item-06').value) || 0 }
+        ];
+
+        const snapshot = await window.getDocs(window.collection(window.db, "diario"));
+        let todosRegistros = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        todosRegistros = todosRegistros.filter(reg => {
+            if (!reg.dateStr) return false;
+            const [rAno, rMes] = reg.dateStr.split('-');
+            return parseInt(rAno) === parseInt(ano) && parseInt(rMes) === parseInt(mes);
+        });
+
+        let htmlFinal = '';
+        let temFotos = false;
+        const idsAtualizar = new Set();
+
+        for (const item of configItens) {
+            if (item.qtd <= 0) continue;
+
+            let registrosItem = todosRegistros.filter(r => r.itemPlanilha === item.id && r.photos && r.photos.length > 0);
+            
+            let fotosNovas = [];
+            let fotosUsadas = [];
+            
+            registrosItem.forEach(reg => {
+                reg.photos.forEach(foto => {
+                    if (reg.usadoEmRelatorio) {
+                        fotosUsadas.push({ foto: foto, reg: reg });
+                    } else {
+                        fotosNovas.push({ foto: foto, reg: reg });
+                    }
+                });
             });
 
-            let htmlFinal = '';
-            let temFotos = false;
-
-            for (const item of configItens) {
-                if (item.qtd <= 0) continue;
-
-                // Separa as fotos deste item, priorizando as que NUNCA foram usadas
-                let registrosItem = todosRegistros.filter(r => r.itemPlanilha === item.id && r.photos && r.photos.length > 0);
-                
-                // Separa fotos novas e usadas
-                let fotosNovas = [];
-                let fotosUsadas = [];
-                
-                registrosItem.forEach(reg => {
-                    reg.photos.forEach(foto => {
-                        if (reg.usadoEmRelatorio) {
-                            fotosUsadas.push({ foto: foto, reg: reg });
-                        } else {
-                            fotosNovas.push({ foto: foto, reg: reg });
-                        }
-                    });
-                });
-
-                // Pega a quantidade solicitada, dando prioridade absoluta às fotos novas
-                let fotosSelecionadas = [];
-                for (let i = 0; i < item.qtd; i++) {
-                    if (fotosNovas.length > 0) {
-                        fotosSelecionadas.push(fotosNovas.shift());
-                    } else if (fotosUsadas.length > 0) {
-                        // Se acabarem as novas, usa as antigas (avisa que repetiu)
-                        fotosSelecionadas.push(fotosUsadas.shift());
-                    }
-                }
-
-                if (fotosSelecionadas.length > 0) {
-                    temFotos = true;
-                    // Monta a página desse item
-                    htmlFinal += criarPaginaPDF(item.id, fotosSelecionadas, mesesNomes[mes], ano);
-
-                    // Marca as fotos selecionadas como usadas no Firebase para não repetir no futuro
-                    const idsParaAtualizar = [...new Set(fotosSelecionadas.map(f => f.reg.id))];
-                    for (const id of idsParaAtualizar) {
-                        await window.updateDoc(window.doc(window.db, "diario", id), { usadoEmRelatorio: true });
-                    }
+            let fotosSelecionadas = [];
+            for (let i = 0; i < item.qtd; i++) {
+                if (fotosNovas.length > 0) {
+                    fotosSelecionadas.push(fotosNovas.shift());
+                } else if (fotosUsadas.length > 0) {
+                    fotosSelecionadas.push(fotosUsadas.shift());
                 }
             }
 
-            if (!temFotos) {
-                return alert("Nenhuma foto encontrada para os itens e mês selecionados.");
+            if (fotosSelecionadas.length > 0) {
+                temFotos = true;
+                htmlFinal += criarPaginaPDF(item.id, fotosSelecionadas, mesesNomes[mes], ano);
+                fotosSelecionadas.forEach(f => idsAtualizar.add(f.reg.id));
             }
+        }
 
-            // Esconde o modal e manda bala no PDF
-            document.getElementById('relatorio-modal').style.display = 'none';
-            const printContainer = document.getElementById('relatorio-print-container');
-            printContainer.innerHTML = htmlFinal;
-            printContainer.style.display = 'block';
+        if (!temFotos) {
+            if (btnSubmit) { btnSubmit.innerText = textoOriginal; btnSubmit.disabled = false; }
+            return alert("Nenhuma foto encontrada para os itens e mês selecionados.");
+        }
 
-            // Configuração do html2pdf para formato A4 Paisagem ou Retrato (o seu PDF é Retrato)
-            const opt = {
-                margin: 0,
-                filename: `Relatorio_Fotografico_${mesesNomes[mes]}_${ano}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'] }
-            };
+        document.getElementById('relatorio-modal').style.display = 'none';
+        const printContainer = document.getElementById('relatorio-print-container');
+        printContainer.innerHTML = htmlFinal;
+        // Importante: precisa estar visível para o html2canvas renderizar
+        printContainer.style.display = 'block';
+        printContainer.style.position = 'fixed';
+        printContainer.style.left = '-99999px';
+        printContainer.style.top = '0';
 
-            html2pdf().set(opt).from(printContainer).save().then(() => {
+        // Aguarda as imagens carregarem antes de gerar o PDF
+        const imagens = printContainer.querySelectorAll('img');
+        await Promise.all(Array.from(imagens).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve; // não trava se falhar
+            });
+        }));
+
+        const opt = {
+            margin: 0,
+            filename: `Relatorio_Fotografico_${mesesNomes[mes]}_${ano}.pdf`,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, allowTaint: false, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] }
+        };
+
+        await html2pdf().set(opt).from(printContainer).save();
+
+        // Marca no Firebase DEPOIS de gerar com sucesso
+        for (const id of idsAtualizar) {
+            try {
+                await window.updateDoc(window.doc(window.db, "diario", id), { usadoEmRelatorio: true });
+            } catch (e) { console.warn("Falha ao marcar usadoEmRelatorio no doc", id, e); }
+        }
+
         printContainer.style.display = 'none';
         printContainer.innerHTML = '';
         alert("Relatório gerado com sucesso! As fotos utilizadas não serão repetidas nos próximos.");
-    });
+    } catch (err) {
+        console.error("Erro ao gerar relatório:", err);
+        alert("Erro ao gerar o relatório: " + err.message);
+        document.getElementById('relatorio-print-container').style.display = 'none';
+    } finally {
+        if (btnSubmit) { btnSubmit.innerText = textoOriginal; btnSubmit.disabled = false; }
+    }
 }
-
                function criarPaginaPDF(tituloItem, fotos, mesNome, ano) {
             let gridHtml = '';
             for (let i = 0; i < fotos.length; i += 2) {
@@ -1818,9 +1840,9 @@
                         const dataStr = f.reg.dateStr.split('-').reverse().join('/');
                         const textoInfo = `${dataStr} - TO-010 Araputanga<br>${f.reg.serviceType}`;
                         
-                        gridHtml += `
+                                               gridHtml += `
                             <div class="pdf-photo-box">
-                                <img src="${f.foto}" class="pdf-photo-img" crossorigin="anonymous">
+                                <img src="${f.foto}" class="pdf-photo-img">
                                 <div class="pdf-photo-info">${textoInfo}</div>
                                 <div class="pdf-photo-footer">${tituloItem}</div>
                             </div>
@@ -2346,8 +2368,29 @@
                             if (d.total > 0) {
                                 let topY = Infinity; metas.forEach(meta => { if (meta.data[index] && meta.data[index].y < topY) topY = meta.data[index].y; });
                                 const x = metas[0].data[index].x; const isMetaBatida = d.total >= metaAtual;
-                                if (isMetaBatida) { ctx.fillStyle = '#4CAF50'; const textWidth = ctx.measureText(d.total.toLocaleString('pt-BR')).width + 10; ctx.beginPath(); ctx.roundRect(x - textWidth/2, topY - 20, textWidth, 16, 4); ctx.fill(); }
-                                ctx.fillStyle = isMetaBatida ? '#FFFFFF' : '#001C54'; ctx.font = 'bold 11px Arial'; ctx.fillText(d.total.toLocaleString('pt-BR'), x, topY - 12);
+                                
+if (isMetaBatida) {
+    ctx.fillStyle = '#4CAF50';
+    const textWidth = ctx.measureText(d.total.toLocaleString('pt-BR')).width + 10;
+    const rx = x - textWidth / 2;
+    const ry = topY - 20;
+    const rw = textWidth;
+    const rh = 16;
+    const rr = 4;
+    ctx.beginPath();
+    ctx.moveTo(rx + rr, ry);
+    ctx.lineTo(rx + rw - rr, ry);
+    ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
+    ctx.lineTo(rx + rw, ry + rh - rr);
+    ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
+    ctx.lineTo(rx + rr, ry + rh);
+    ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
+    ctx.lineTo(rx, ry + rr);
+    ctx.quadraticCurveTo(rx, ry, rx + rr, ry);
+    ctx.closePath();
+    ctx.fill();
+}
+ctx.fillStyle = isMetaBatida ? '#FFFFFF' : '#001C54'; ctx.font = 'bold 11px Arial'; ctx.fillText(d.total.toLocaleString('pt-BR'), x, topY - 12);
                             }
                         });
                     }
