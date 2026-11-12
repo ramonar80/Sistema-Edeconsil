@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistema Edeconsil</title>
     <link rel="manifest" href="/Sistema-Edeconsil/manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <!-- Bibliotecas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1701,14 +1702,12 @@
             });
         }
 
-        async function gerarRelatorioFotografico() {
+               async function gerarRelatorioFotografico() {
             if (!window.firebaseReady) return alert("Aguarde a conexão com a nuvem.");
-            if (typeof html2pdf === 'undefined') return alert("Biblioteca de PDF não carregou. Verifique a conexão e recarregue a página.");
-            if (typeof window.getDocs !== 'function') return alert("Erro interno: getDocs não disponível. Recarregue a página.");
-
+            
             const btnSubmit = document.querySelector('#form-relatorio button[type="submit"]');
             const textoOriginal = btnSubmit ? btnSubmit.innerText : '';
-            if (btnSubmit) { btnSubmit.innerText = 'Gerando...'; btnSubmit.disabled = true; }
+            if (btnSubmit) { btnSubmit.innerText = 'Gerando em segundos...'; btnSubmit.disabled = true; }
 
             try {
                 const mes = document.getElementById('rel-mes').value;
@@ -1733,9 +1732,9 @@
                     return parseInt(rAno) === parseInt(ano) && parseInt(rMes) === parseInt(mes);
                 });
 
-                let htmlFinal = '';
                 let temFotos = false;
                 const idsAtualizar = new Set();
+                const dadosPaginas = []; // Guardaremos os dados processados aqui
 
                 for (const item of configItens) {
                     if (item.qtd <= 0) continue;
@@ -1747,26 +1746,20 @@
                     
                     registrosItem.forEach(reg => {
                         reg.photos.forEach(foto => {
-                            if (reg.usadoEmRelatorio) {
-                                fotosUsadas.push({ foto: foto, reg: reg });
-                            } else {
-                                fotosNovas.push({ foto: foto, reg: reg });
-                            }
+                            if (reg.usadoEmRelatorio) { fotosUsadas.push({ foto: foto, reg: reg }); } 
+                            else { fotosNovas.push({ foto: foto, reg: reg }); }
                         });
                     });
 
                     let fotosSelecionadas = [];
                     for (let i = 0; i < item.qtd; i++) {
-                        if (fotosNovas.length > 0) {
-                            fotosSelecionadas.push(fotosNovas.shift());
-                        } else if (fotosUsadas.length > 0) {
-                            fotosSelecionadas.push(fotosUsadas.shift());
-                        }
+                        if (fotosNovas.length > 0) { fotosSelecionadas.push(fotosNovas.shift()); } 
+                        else if (fotosUsadas.length > 0) { fotosSelecionadas.push(fotosUsadas.shift()); }
                     }
 
                     if (fotosSelecionadas.length > 0) {
                         temFotos = true;
-                        htmlFinal += criarPaginaPDF(item.id, fotosSelecionadas, mesesNomes[mes], ano);
+                        dadosPaginas.push({ titulo: item.id, fotos: fotosSelecionadas });
                         fotosSelecionadas.forEach(f => idsAtualizar.add(f.reg.id));
                     }
                 }
@@ -1777,121 +1770,113 @@
                 }
 
                 document.getElementById('relatorio-modal').style.display = 'none';
-                const printContainer = document.getElementById('relatorio-print-container');
-                printContainer.innerHTML = htmlFinal;
 
-                // ✅ TÉCNICA CORRETA: renderizado (opacity 1), mas fora do viewport do usuário
-                // NÃO usar opacity: 0 — html2canvas desenha transparente!
-                printContainer.style.display = 'block';
-                printContainer.style.position = 'fixed';
-                printContainer.style.top = '0';
-                printContainer.style.left = '0';
-                printContainer.style.transform = 'translateX(-200vw)';   // ← fora do viewport
-                printContainer.style.zIndex = '-1';
-                printContainer.style.width = '210mm';
-                printContainer.style.minHeight = '297mm';
-                printContainer.style.background = '#ffffff';
-                printContainer.style.opacity = '1';                       // ← opacidade total
-                printContainer.style.pointerEvents = 'none';
-                printContainer.style.overflow = 'visible';
-
-                // Aguarda imagens carregarem
-                const imagens = printContainer.querySelectorAll('img');
-                await Promise.all(Array.from(imagens).map(img => {
-                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-                    return new Promise(resolve => {
-                        img.onload = resolve;
-                        img.onerror = resolve;
+                // Inicia a criação do PDF diretamente (MUITO MAIS RÁPIDO)
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                // Carrega a logo em Base64 para colocar no PDF de forma síncrona
+                const logoUrl = "https://i.postimg.cc/dVf8bLHk/logo-Edeconsil.jpg";
+                let logoBase64 = null;
+                try {
+                    const response = await fetch(logoUrl);
+                    const blob = await response.blob();
+                    logoBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(blob);
                     });
-                }));
+                } catch(e) { console.warn("Não foi possível carregar a logo.", e); }
 
-                // Força repaint do navegador antes do html2canvas
-                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-                await new Promise(resolve => setTimeout(resolve, 300));
+                for (let p = 0; p < dadosPaginas.length; p++) {
+                    const pagina = dadosPaginas[p];
+                    if (p > 0) pdf.addPage();
 
-                const opt = {
-                    margin: 0,
-                    filename: `Relatorio_Fotografico_${mesesNomes[mes]}_${ano}.pdf`,
-                    image: { type: 'jpeg', quality: 0.95 },
-                    html2canvas: { 
-                        scale: 2, 
-                        useCORS: true, 
-                        allowTaint: false, 
-                        logging: false,
-                        scrollX: 0,
-                        scrollY: 0,
-                        windowWidth: printContainer.scrollWidth,
-                        windowHeight: printContainer.scrollHeight
-                    },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['css', 'legacy'], avoid: '.pdf-photo-box' }
-                };
+                    // Desenha o Cabeçalho
+                    pdf.setLineWidth(0.5);
+                    pdf.rect(10, 10, 190, 20); // Retângulo externo do header
+                    if (logoBase64) pdf.addImage(logoBase64, 'JPEG', 12, 12, 30, 16); // Logo Esquerda
+                    if (logoBase64) pdf.addImage(logoBase64, 'JPEG', 168, 12, 30, 16); // Logo Direita
+                    
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(14);
+                    pdf.text("TO-010", 105, 18, { align: "center" });
+                    pdf.text("ANANÁS/ARAGUATINS", 105, 25, { align: "center" });
 
-                await html2pdf().set(opt).from(printContainer).save();
+                    // Desenha o Subtítulo
+                    pdf.rect(10, 32, 190, 10);
+                    pdf.setFontSize(12);
+                    pdf.text(`RELATÓRIO FOTOGRÁFICO TO/010 - ${mesesNomes[mes]} DE ${ano}`, 105, 38, { align: "center" });
+
+                    // Posição inicial para as fotos
+                    let posY = 45;
+                    const fotoLargura = 90;
+                    const fotoAltura = 60;
+                    const gapX = 10;
+                    const gapY = 10;
+
+                    for (let i = 0; i < pagina.fotos.length; i += 2) {
+                        // Verifica se precisa criar nova página antes de desenhar a próxima linha de fotos
+                        if (posY + fotoAltura + 20 > 280) {
+                            pdf.addPage();
+                            posY = 15; // Reseta a posição no topo da nova página
+                        }
+
+                        for (let j = 0; j < 2; j++) {
+                            if (pagina.fotos[i + j]) {
+                                const f = pagina.fotos[i + j];
+                                const posX = 10 + (j * (fotoLargura + gapX));
+                                
+                                // Desenha a moldura da foto
+                                pdf.rect(posX, posY, fotoLargura, fotoAltura + 15);
+                                
+                                // Adiciona a imagem
+                                try {
+                                    pdf.addImage(f.foto, 'JPEG', posX + 2, posY + 2, fotoLargura - 4, fotoAltura - 4);
+                                } catch(e) {
+                                    console.error("Erro ao adicionar imagem no PDF", e);
+                                }
+
+                                // Textos embaixo da foto
+                                const dataStr = f.reg.dateStr.split('-').reverse().join('/');
+                                pdf.setFontSize(8);
+                                pdf.setFont("helvetica", "normal");
+                                pdf.text(`${dataStr} - TO-010 Araputanga`, posX + 2, posY + fotoAltura + 2);
+                                
+                                // Quebra o texto do serviço se for muito longo
+                                let textoServico = f.reg.serviceType || '';
+                                if (textoServico.length > 45) textoServico = textoServico.substring(0, 45) + '...';
+                                pdf.text(textoServico, posX + 2, posY + fotoAltura + 6);
+
+                                // Rodapé da foto (Nome do Item)
+                                pdf.setFontSize(9);
+                                pdf.setFont("helvetica", "bold");
+                                pdf.text(pagina.titulo, posX + (fotoLargura/2), posY + fotoAltura + 12, { align: "center" });
+                            }
+                        }
+                        posY += fotoAltura + 20; // Pula para a próxima linha
+                    }
+                }
+
+                // Salva o arquivo instantaneamente
+                pdf.save(`Relatorio_Fotografico_${mesesNomes[mes]}_${ano}.pdf`);
 
                 for (const id of idsAtualizar) {
                     try {
                         await window.updateDoc(window.doc(window.db, "diario", id), { usadoEmRelatorio: true });
-                    } catch (e) { console.warn("Falha ao marcar usadoEmRelatorio no doc", id, e); }
+                    } catch (e) { console.warn("Falha ao marcar usadoEmRelatorio", id, e); }
                 }
 
-                printContainer.style.display = 'none';
-                printContainer.style.transform = '';
-                printContainer.style.zIndex = '';
-                printContainer.style.minHeight = '';
-                printContainer.innerHTML = '';
-                alert("Relatório gerado com sucesso! As fotos utilizadas não serão repetidas nos próximos.");
+                alert("Relatório gerado com sucesso e super rápido!");
             } catch (err) {
                 console.error("Erro ao gerar relatório:", err);
                 alert("Erro ao gerar o relatório: " + err.message);
-                const pc = document.getElementById('relatorio-print-container');
-                if (pc) { pc.style.display = 'none'; pc.style.transform = ''; pc.innerHTML = ''; }
             } finally {
                 if (btnSubmit) { btnSubmit.innerText = textoOriginal; btnSubmit.disabled = false; }
             }
         }
 
-        function criarPaginaPDF(tituloItem, fotos, mesNome, ano) {
-            let gridHtml = '';
-            for (let i = 0; i < fotos.length; i += 2) {
-                gridHtml += `<div class="pdf-grid">`;   // ✅ sem margin-bottom
-                for (let j = 0; j < 2; j++) {
-                    if (fotos[i + j]) {
-                        const f = fotos[i + j];
-                        const dataStr = f.reg.dateStr.split('-').reverse().join('/');
-                        const textoInfo = `${dataStr} - TO-010 Araputanga<br>${f.reg.serviceType}`;
-                        
-                        gridHtml += `
-                            <div class="pdf-photo-box">
-                                <img src="${f.foto}" class="pdf-photo-img">
-                                <div class="pdf-photo-info">${textoInfo}</div>
-                                <div class="pdf-photo-footer">${tituloItem}</div>
-                            </div>
-                        `;
-                    } else {
-                        gridHtml += `<div></div>`;
-                    }
-                }
-                gridHtml += `</div>`;
-            }
-
-            return `
-                <div class="pdf-report-page pdf-page-break">
-                    <div class="pdf-header">
-                        <img src="https://i.postimg.cc/dVf8bLHk/logo-Edeconsil.jpg" alt="Edeconsil">
-                        <div class="pdf-header-mid">
-                            TO-010<br>ANANÁS/ARAGUATINS
-                        </div>
-                        <img src="https://i.postimg.cc/dVf8bLHk/logo-Edeconsil.jpg" alt="Edeconsil">
-                    </div>
-                    <div class="pdf-subheader">
-                        RELATÓRIO FOTOGRÁFICO TO/010 - ${mesNome} DE ${ano}
-                    </div>
-                    
-                    ${gridHtml}
-                </div>
-            `;
-        }
+        // Não precisamos mais da função criarPaginaPDF antiga, pode apagá-la!
                         // =========================================
         // MÓDULO PRODUÇÃO E CONTROLE EH
         // =========================================
